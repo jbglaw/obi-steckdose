@@ -13,7 +13,7 @@ Running: 100/900 / 900/100 (depends on Relay on/off)
 
  Missing stuff
 ~~~~~~~~~~~~~~~
-[ ] MQTT
+[ ] MQTT (server:port config, endpoint implementation)
 [ ] Telnet<->serial proxy
 [ ] Telnet serial extensions
 [ ] Telnet <-> syslog
