@@ -295,7 +295,7 @@ http_GET_status (void)
 	html += "<html><head><title>System Status</title></head><body><form action=\"/config\" method=\"post\"><table>";
 	html += "<tr><th>Wifi SSID:</th><td><input type=\"text\" name=\"wifi_ssid\" maxlength=\"" + String (sizeof (cfg.wifi_ssid) - 1)+ "\" value=\"" + String (cfg.wifi_ssid)+ "\"></td></tr>";
 	html += "<tr><th>Wifi PSK:</th><td><input type=\"text\" name=\"wifi_psk\" maxlength=\"" + String (sizeof (cfg.wifi_psk) - 1) + "\" value=\"" + String (cfg.wifi_psk) + "\"></td></tr>";
-	html += "<tr><th>MQTT Name:</th><td><input type=\"text\" name=\"dev_mqtt_name\" maxlength=\"" + String (sizeof (cfg.dev_mqtt_name) - 1)+ "\" value=\"" + String (cfg.dev_mqtt_name)+ "\"></td></tr>";
+	html += "<tr><th>MQTT/mDNS Name:</th><td><input type=\"text\" name=\"dev_mqtt_name\" maxlength=\"" + String (sizeof (cfg.dev_mqtt_name) - 1)+ "\" value=\"" + String (cfg.dev_mqtt_name)+ "\"></td></tr>";
 	html += "<tr><th>Title:</th><td><input type=\"text\" name=\"dev_title\" maxlength=\"" + String (cfg.dev_title) + "\" value=\"" + String (cfg.dev_title) + "\"></td></tr>";
 	html += "<tr><th>Serial Speed:</th><td><select name=\"serial_speed\">";
 		for (size_t i = 0; i < ARRAY_SIZE (serial_baud_rate); i++)
