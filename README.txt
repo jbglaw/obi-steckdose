@@ -21,3 +21,7 @@ Running: 100/900 / 900/100 (depends on Relay on/off)
 [ ] Telnet serial extensions
 [ ] Telnet <-> syslog
 [ ] Delayed device power-on after boot
++       char syslog_ip[16];
++       char mqtt_server_ip[16];
++       int mqtt_server_port;
+

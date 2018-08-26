@@ -18,6 +18,10 @@ struct obi_config {
         bool relay_on_after_boot_p;
 	int  relay_delay_seconds;
 	bool relay_randomize_delay_p;
+
+	char syslog_ip[16];
+	char mqtt_server_ip[16];
+	int mqtt_server_port;
 };
 
 extern struct obi_config cfg;
