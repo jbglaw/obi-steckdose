@@ -16,4 +16,5 @@ Running: 100/900 / 900/100 (depends on Relay on/off)
 [ ] MQTT
 [ ] Telnet<->serial proxy
 [ ] Telnet serial extensions
+[ ] Telnet <-> syslog
 [ ] Delayed device power-on after boot
