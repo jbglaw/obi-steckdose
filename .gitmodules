@@ -1,3 +1,6 @@
 [submodule "Esp8266-Arduino-Makefile"]
 	path = Esp8266-Arduino-Makefile
 	url = https://github.com/thunderace/Esp8266-Arduino-Makefile.git
+[submodule "libraries/Syslog"]
+	path = libraries/Syslog
+	url = https://github.com/arcao/Syslog

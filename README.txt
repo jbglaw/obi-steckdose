@@ -1,9 +1,12 @@
  Building
 ~~~~~~~~~~
+# Once:
 git submodule init
 git submodule update
+cd Esp8266-Arduino-Makefile &&
+# Always:
 make
-make upload
+make upload	# Serial port in Makefile
 
  LED Blinking
 ~~~~~~~~~~~~~~
