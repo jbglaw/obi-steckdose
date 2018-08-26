@@ -1,8 +1,7 @@
 #ifndef OBI_COMMON_H
 #define OBI_COMMON_H
 
-#define WITH_OBI_SERIAL_DEBUGGING
-#ifdef WITH_OBI_SERIAL_DEBUGGING
+#if 1
 #  define obi_print(...)	Serial.print(__VA_ARGS__)
 #  define obi_printf(...)	Serial.printf(__VA_ARGS__)
 #  define obi_println(...)	Serial.println(__VA_ARGS__)

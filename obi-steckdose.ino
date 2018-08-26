@@ -7,8 +7,6 @@
 #include "obi-telnet.h"
 #include "obi-status-led.h"
 
-static char default_ssid_name[64] = "";
-
 const int pin_relay_on = 12;
 const int pin_relay_off = 5;
 const int pin_led_wifi = 4;
@@ -71,8 +69,7 @@ relay_set (bool on_p)
 	delay (50);
 	digitalWrite (toggle_pin, 1);
 
-	obi_print ("Setting relay to ");
-	obi_println (relay_on_p? "ON": "OFF");
+	obi_printf ("Setting relay to %s\n", (relay_on_p? "ON": "OFF"));
 
 	return;
 }
@@ -81,35 +78,6 @@ relay_set (bool on_p)
  * Webserver callback methods.
  */
 static void
-http_GET_relay (void)
-{
-	String html;
-
-	html += "<html><head><title>Relay Status on " + String (cfg.dev_mqtt_name) + " (" + cfg.dev_title + ")</title></head>";
-	html += "<body>Relay: <form action=\"/relay\" method=\"post\">";
-	html += "<input type=\"radio\" name=\"relay\" value=\"on\"";
-		html += relay_on_p? " checked": "";
-		html += "><label for=\"on\">on</label>";
-	html += "<input type=\"radio\" name=\"relay\" value=\"off\"";
-		html += relay_on_p? "": " checked";
-		html += "><label for=\"off\">off</label>";
-	html += "<input type=\"submit\" value=\"Submit\">";
-	html += "</form></body></html>";
-
-	http_server.send (200, "text/html", html.c_str ());
-
-	return;
-}
-
-static void
-http_POST_relay (void)
-{
-	// relay_set (true);		/* XXX Check arg and switch relay.  */
-	http_server.send (200, "text/plain", "");
-	return;
-}
-
-static void
 http_POST_config (void)
 {
 	bool need_config_save_p = false;
@@ -117,11 +85,8 @@ http_POST_config (void)
 	bool need_serial_change_p = false;
 
 	/* Dump arguments.  */
-	for (int i = 0; i < http_server.args (); i++) {
-		obi_print (http_server.argName(i).c_str ());
-		obi_print ("=");
-		obi_println (http_server.arg(i).c_str ());
-	}
+	for (int i = 0; i < http_server.args (); i++)
+		obi_printf ("%s=%s\n", http_server.argName(i).c_str (), http_server.arg(i).c_str ());
 
 	if (http_server.hasArg ("wifi_ssid")
 	    && http_server.arg("wifi_ssid").length () < sizeof (cfg.wifi_ssid) - 1) {
@@ -162,18 +127,9 @@ http_POST_config (void)
 		long serial_speed = atol (http_server.arg("serial_speed").c_str ());
 		bool speed_okay_p = false;
 
-		obi_print ("Have serial speed=<");			// XXX
-		obi_print (http_server.arg("serial_speed").c_str ());
-		obi_println (">");
-
 		for (size_t i = 0; i < ARRAY_SIZE (serial_baud_rate); i++)
 			if (serial_baud_rate[i] == serial_speed)
 				speed_okay_p = true;
-
-		if (speed_okay_p)
-			obi_println ("Speed okay");		// XXX
-		else
-			obi_println ("Speed rejected");
 
 		if (speed_okay_p && serial_speed != cfg.serial_speed) {
 			cfg.serial_speed = serial_speed;
@@ -257,6 +213,16 @@ http_POST_config (void)
 			cfg.relay_randomize_delay_p = relay_randomize_delay_p;
 			need_config_save_p = true;
 		}
+	}
+
+	if (http_server.hasArg ("relay")) {
+		bool new_relay_on_p = false;
+		relay_on_p;
+
+		if (strcmp (http_server.arg ("relay").c_str (), "on") == 0)
+			new_relay_on_p = true;
+
+		relay_set (new_relay_on_p);
 	}
 
 	http_server.sendHeader ("Location", "/status");
@@ -368,6 +334,14 @@ http_GET_status (void)
 		html += "<input type=\"radio\" name=\"relay_randomize_delay_p\" value=\"off\"";
 		html += (! cfg.relay_randomize_delay_p)? " checked": "";
 		html += "><label for=\"off\">no</label>";
+	html += "<tr><th>Current relay state:</th><td>";
+		html += "<input type=\"radio\" name=\"relay\" value=\"on\"";
+		html += relay_on_p? " checked": "";
+		html += "><label for=\"on\">on</label>";
+		html += "<input type=\"radio\" name=\"relay\" value=\"off\"";
+		html += relay_on_p? "": " checked";
+		html += "><label for=\"off\">off</label>";
+		html += "</td></tr>";
 	html += "<tr><th>Wifi MAC:</th><td>" + String (mac_formatted) + "</td></tr>";
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
 	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only"): String ("Production")) + "</td></tr>";
@@ -393,8 +367,6 @@ setup (void)
 
 	http_server.on ("/config", HTTP_POST, &http_POST_config);
 	http_server.on ("/status", HTTP_GET,  &http_GET_status);
-	http_server.on ("/relay",  HTTP_GET,  &http_GET_relay);
-	http_server.on ("/relay",  HTTP_POST, &http_POST_relay);
 	http_server.begin ();
 
 	/* Enable config-only mode?  */
@@ -404,19 +376,11 @@ setup (void)
 	    || strlen (cfg.wifi_psk) == 0) {
 
 		uint8_t mac[6];
+		char default_ssid_name[64];
 
 		WiFi.softAPmacAddress (mac);
-		default_ssid_name[0] = 'O';
-		default_ssid_name[1] = 'B';
-		default_ssid_name[2] = 'I';
-		default_ssid_name[3] = '-';
-		default_ssid_name[4] = nibble2hex ((mac[3] >> 4) & 0x0f);
-		default_ssid_name[5] = nibble2hex ((mac[3] >> 0) & 0x0f);
-		default_ssid_name[6] = nibble2hex ((mac[4] >> 4) & 0x0f);
-		default_ssid_name[7] = nibble2hex ((mac[4] >> 0) & 0x0f);
-		default_ssid_name[8] = nibble2hex ((mac[5] >> 4) & 0x0f);
-		default_ssid_name[9] = nibble2hex ((mac[5] >> 0) & 0x0f);
-		default_ssid_name[10] = '\0';
+		snprintf (default_ssid_name, sizeof (default_ssid_name), "OBI-%02x%02x%02x",
+		          mac[3], mac[4], mac[5]);
 
 		state = st_config;
 

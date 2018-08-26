@@ -1,4 +1,5 @@
 #include <EEPROM.h>
+#include "obi-common.h"
 #include "obi-config.h"
 #include "obi-misc.h"
 
@@ -29,15 +30,9 @@ config_load (struct obi_config *cfg)
 
 	if (checksum == cfg->_checksum) {
 		ret = 0;
-		obi_print ("Config: Checksum okay (0x");
-		obi_print (checksum, HEX);
-		obi_println (")");
+		obi_printf ("Config: Checksum okay (0x%02x)\n", checksum);
 	} else {
-		obi_print ("Config: Checksum does not match: 0x");
-		obi_print (checksum, HEX);
-		obi_print ("calculated vs. 0x");
-		obi_print (cfg->_checksum, HEX);
-		obi_println (" in flash");
+		obi_printf ("Config: Checksum does not match: 0x%02x calculated vs. 0x%02x in flash\n", checksum, cfg->_checksum);
 		memset (cfg, 0x00, sizeof (*cfg));
 	}
 
@@ -64,8 +59,7 @@ config_save (struct obi_config *cfg)
 	ret = EEPROM.commit ();
 	EEPROM.end ();
 
-	obi_print ("Config: Saved checksum is 0x");
-	obi_println (cfg->_checksum, HEX);
+	obi_printf ("Config: Saved checksum is 0x%02x\n", cfg->_checksum);
 
 	return ret;
 }
