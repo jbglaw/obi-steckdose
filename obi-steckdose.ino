@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
+#include <ESP8266mDNS.h>
 #include "obi-button.h"
 #include "obi-common.h"
 #include "obi-config.h"
@@ -388,6 +389,7 @@ setup (void)
 		Serial.printf ("Starting AP wifi with %s", default_ssid_name);
 		WiFi.mode (WIFI_AP);
 		WiFi.softAP (default_ssid_name);
+		MDNS.begin (default_ssid_name);
 
 		while (1) {
 			http_server.handleClient ();
@@ -411,6 +413,7 @@ setup (void)
 	Serial.begin (cfg.serial_speed, serial_framing ());
 	http_server.begin ();
 	telnet_server.begin ();
+	MDNS.begin (cfg.dev_mqtt_name);
 	// XXX MQTT
 
 	state = st_running;
