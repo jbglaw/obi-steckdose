@@ -30,9 +30,9 @@ config_load (struct obi_config *cfg)
 
 	if (checksum == cfg->_checksum) {
 		ret = 0;
-		obi_printf ("Config: Checksum okay (0x%02x)\n", checksum);
+		obi_printf ("Config: Checksum okay (0x%02x)\r\n", checksum);
 	} else {
-		obi_printf ("Config: Checksum does not match: 0x%02x calculated vs. 0x%02x in flash\n", checksum, cfg->_checksum);
+		obi_printf ("Config: Checksum does not match: 0x%02x calculated vs. 0x%02x in flash\r\n", checksum, cfg->_checksum);
 		memset (cfg, 0x00, sizeof (*cfg));
 	}
 
@@ -59,7 +59,7 @@ config_save (struct obi_config *cfg)
 	ret = EEPROM.commit ();
 	EEPROM.end ();
 
-	obi_printf ("Config: Saved checksum is 0x%02x\n", cfg->_checksum);
+	obi_printf ("Config: Saved checksum is 0x%02x\r\n", cfg->_checksum);
 
 	return ret;
 }

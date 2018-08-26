@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
+#include "obi-button.h"
 #include "obi-common.h"
 #include "obi-config.h"
 #include "obi-misc.h"
@@ -10,7 +11,7 @@
 const int pin_relay_on = 12;
 const int pin_relay_off = 5;
 const int pin_led_wifi = 4;
-const int pin_btn = 14;	/* digitalRead() == 0 when not pressed.  */
+const int pin_btn = 14;
 
 bool relay_on_p = false;
 enum state state = st_running;
@@ -69,7 +70,7 @@ relay_set (bool on_p)
 	delay (50);
 	digitalWrite (toggle_pin, 1);
 
-	obi_printf ("Setting relay to %s\n", (relay_on_p? "ON": "OFF"));
+	obi_printf ("Setting relay to %s\r\n", (relay_on_p? "ON": "OFF"));
 
 	return;
 }
@@ -86,7 +87,7 @@ http_POST_config (void)
 
 	/* Dump arguments.  */
 	for (int i = 0; i < http_server.args (); i++)
-		obi_printf ("%s=%s\n", http_server.argName(i).c_str (), http_server.arg(i).c_str ());
+		obi_printf ("%s=%s\r\n", http_server.argName(i).c_str (), http_server.arg(i).c_str ());
 
 	if (http_server.hasArg ("wifi_ssid")
 	    && http_server.arg("wifi_ssid").length () < sizeof (cfg.wifi_ssid) - 1) {
@@ -371,7 +372,7 @@ setup (void)
 
 	/* Enable config-only mode?  */
 	if (config_load (&cfg) != 0
-	    || ! digitalRead (pin_btn)
+	    || button_pressed_p ()
 	    || strlen (cfg.wifi_ssid) == 0
 	    || strlen (cfg.wifi_psk) == 0) {
 
@@ -421,4 +422,5 @@ loop (void)
 	http_server.handleClient ();
 	telnet_server.handle ();
 	handle_status_led ();
+	handle_button ();
 }
