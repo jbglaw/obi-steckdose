@@ -7,3 +7,5 @@ running: 100/900 / 900/100
 [ ] MQTT
 [ ] Telnet<->serial proxy
 [ ] Telnet serial extensions
+[ ] Delayed device power-on after boot
+[ ] Power switch by button
