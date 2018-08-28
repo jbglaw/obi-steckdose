@@ -1,7 +1,7 @@
 #include "obi-button.h"
 #include "obi-common.h"
 
-static long button_press_detected_millis = 0;
+static unsigned long button_press_detected_millis = 0;
 static bool button_was_pressed_p = false;
 static bool button_action_done_p = false;
 

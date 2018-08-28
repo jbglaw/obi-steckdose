@@ -3,7 +3,7 @@
 #include "obi-http.h"
 #include "obi-misc.h"
 
-static long serial_baud_rate[] = {
+const long tbl_serial_baud_rate[] = {
 	75,
 	110,
 	150,
@@ -18,23 +18,130 @@ static long serial_baud_rate[] = {
 	115200,
 	230400,
 	460800,
-	921600
+	921600,
 };
-static int serial_bits[] = {
+const long tbl_serial_bits[] = {
 	8,
 	7,
 	6,
 	5,
 };
-static const char *serial_parity[] = {
+const char *tbl_serial_parity[] = {
 	"N",
 	"E",
 	"O",
 };
-static int serial_stopbits[] = {
+const long tbl_serial_stopbits[] = {
 	1,
 	2,
 };
+
+
+static String
+gen_bool_choice (const char *title, const char *cfg_option, const char *yes, const char *no, bool curr_on_p)
+{
+	String ret;
+
+	ret += "<tr><th>";
+	ret += title;
+	ret += "</th><td>";
+	ret += "<input type=\"radio\" name=\"";
+	ret += cfg_option;
+	ret += "\" value=\"yes\"";
+	ret += curr_on_p? " checked": "";
+	ret += "><label for=\"yes\">";
+	ret += yes;
+	ret +="</label>";
+	ret += "<input type=\"radio\" name=\"";
+	ret += cfg_option;
+	ret += "\" value=\"no\"";
+	ret += curr_on_p? "": " checked";
+	ret += "><label for=\"no\">";
+	ret += no;
+	ret += "</label>";
+	ret += "</td></tr>";
+
+	return ret;
+}
+
+static String
+gen_long_choice (const char *title, const char *cfg_option, const long *data, size_t num, long dflt, long curr)
+{
+	bool value_found_p = false;
+	String ret;
+
+	for (size_t i = 0; i < num; i++) {
+		if (data[i] == curr) {
+			value_found_p = true;
+			break;
+		}
+	}
+
+	ret += "<tr><th>";
+	ret += title;
+	ret += "</th><td><select name=\"";
+	ret += cfg_option;
+	ret += "\">";
+	for (size_t i = 0; i < num; i++)
+		ret += "<option value=\"" + String (data[i]) + "\""
+		       + (curr == data[i]
+		          || (! value_found_p
+		              && data[i] == dflt)? " selected": "")
+		       + ">" + String (data[i]) + "</option>";
+	ret += "</select></td></tr>";
+
+	return ret;
+}
+
+static String
+gen_string_choice (const char *title, const char *cfg_option, const char **data, size_t num, const char *dflt, const char *curr)
+{
+	bool value_found_p = false;
+	String ret;
+
+	for (size_t i = 0; i < num; i++) {
+		if (strcmp (data[i], curr) == 0) {
+			value_found_p = true;
+			break;
+		}
+	}
+
+	ret += "<tr><th>";
+	ret += title;
+	ret += "</th><td><select name=\"";
+	ret += cfg_option;
+	ret += "\">";
+	for (size_t i = 0; i < num; i++) {
+		ret += "<option value=\"";
+		ret += data[i];
+		ret += "\"";
+		ret += (strcmp (curr, data[i]) == 0
+		          || (! value_found_p
+		              && strcmp (data[i], dflt) == 0)? " selected": "");
+		ret += ">";
+		ret += data[i];
+		ret += "</option>";
+	}
+	ret += "</select></td></tr>";
+
+	return ret;
+}
+
+static String
+gen_string_input (const char *title, const char *cfg_option, size_t buflen, const char *curr)
+{
+	String ret;
+
+	ret += "<tr><th>";
+	ret += title;
+	ret += ":</th><td><input type=\"text\" name=\"";
+	ret += cfg_option;
+	ret += "\" maxlength=\"" + String (buflen - 1)+ "\" value=\"" + String (curr)+ "\"></td></tr>";
+
+	return ret;
+}
+
+
 
 void
 http_POST_config (void)
@@ -86,8 +193,8 @@ http_POST_config (void)
 		long serial_speed = atol (http_server.arg("serial_speed").c_str ());
 		bool speed_okay_p = false;
 
-		for (size_t i = 0; i < ARRAY_SIZE (serial_baud_rate); i++)
-			if (serial_baud_rate[i] == serial_speed)
+		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_baud_rate); i++)
+			if (tbl_serial_baud_rate[i] == serial_speed)
 				speed_okay_p = true;
 
 		if (speed_okay_p && serial_speed != cfg.serial_speed) {
@@ -101,8 +208,8 @@ http_POST_config (void)
 		int this_serial_bits = atoi (http_server.arg("serial_bits").c_str ());
 		bool bits_okay_p = false;
 
-		for (size_t i = 0; i < ARRAY_SIZE (serial_bits); i++)
-			if (serial_bits[i] == this_serial_bits)
+		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_bits); i++)
+			if (tbl_serial_bits[i] == this_serial_bits)
 				bits_okay_p = true;
 
 		if (bits_okay_p && this_serial_bits != cfg.serial_bits) {
@@ -115,8 +222,8 @@ http_POST_config (void)
 	if (http_server.hasArg ("serial_parity")) {
 		bool parity_okay_p = false;
 
-		for (size_t i = 0; i < ARRAY_SIZE (serial_parity); i++)
-			if (strcmp (serial_parity[i], http_server.arg ("serial_parity").c_str ()) == 0)
+		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_parity); i++)
+			if (strcmp (tbl_serial_parity[i], http_server.arg ("serial_parity").c_str ()) == 0)
 				parity_okay_p = true;
 
 		if (parity_okay_p && strcmp (cfg.serial_parity, http_server.arg("serial_parity").c_str ()) != 0) {
@@ -130,8 +237,8 @@ http_POST_config (void)
 		int this_serial_stopbits = atol (http_server.arg ("serial_stopbits").c_str ());
 		bool stopbits_okay_p = false;
 
-		for (size_t i = 0; i < ARRAY_SIZE (serial_stopbits); i++)
-			if (serial_stopbits[i] == this_serial_stopbits)
+		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_stopbits); i++)
+			if (tbl_serial_stopbits[i] == this_serial_stopbits)
 				stopbits_okay_p = true;
 
 		if (stopbits_okay_p && this_serial_stopbits != cfg.serial_stopbits) {
@@ -149,27 +256,6 @@ http_POST_config (void)
 
 		if (relay_on_after_boot_p != cfg.relay_on_after_boot_p) {
 			cfg.relay_on_after_boot_p = relay_on_after_boot_p;
-			need_config_save_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("relay_delay_seconds")) {
-		int relay_delay_seconds = atoi (http_server.arg("relay_delay_seconds").c_str ());
-
-		if (relay_delay_seconds != cfg.relay_delay_seconds) {
-			cfg.relay_delay_seconds = relay_delay_seconds;
-			need_config_save_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("relay_randomize_delay_p")) {
-		bool relay_randomize_delay_p = false;
-
-		if (strcmp (http_server.arg ("relay_randomize_delay_p").c_str (), "on") == 0)
-			relay_randomize_delay_p = true;
-
-		if (relay_randomize_delay_p != cfg.relay_randomize_delay_p) {
-			cfg.relay_randomize_delay_p = relay_randomize_delay_p;
 			need_config_save_p = true;
 		}
 	}
@@ -203,12 +289,12 @@ http_POST_config (void)
 	}
 
 	if (http_server.hasArg ("mqtt_server_port")) {
-		long mqtt_server_port = atol (http_server.arg("mqtt_server_port").c_str ());
+		const char *mqtt_server_port = http_server.arg ("mqtt_server_port").c_str ();
 
-		if (mqtt_server_port != cfg.mqtt_server_port
-		    && mqtt_server_port > 1
-		    && mqtt_server_port < 6536) {
-			cfg.mqtt_server_port = mqtt_server_port;
+		if (strcmp (mqtt_server_port, cfg.mqtt_server_port) != 0
+		    && atol (mqtt_server_port) > 1
+		    && atol (mqtt_server_port) < 6536) {
+			memcpy (cfg.mqtt_server_port, http_server.arg("mqtt_server_port").c_str (), sizeof (cfg.mqtt_server_port));
 			need_config_save_p = true;
 			need_reboot_p = true;
 		}
@@ -231,39 +317,9 @@ void
 http_GET_status (void)
 {
 	String html;
-	bool valid_serial_speed_p = false;
-	bool valid_serial_bits_p = false;
-	bool valid_serial_parity_p = false;
-	bool valid_serial_stopbits_p = false;
 	uint8_t mac[6];
 	char mac_formatted[18];
 	IPAddress my_ip;
-
-	/* Check if we already have valid values.  */
-	for (size_t i = 0; i < ARRAY_SIZE (serial_baud_rate); i++) {
-		if (cfg.serial_speed == serial_baud_rate[i]) {
-			valid_serial_speed_p = true;
-			break;
-		}
-	}
-	for (size_t i = 0; i < ARRAY_SIZE (serial_bits); i++) {
-		if (cfg.serial_bits == serial_bits[i]) {
-			valid_serial_bits_p = true;
-			break;
-		}
-	}
-	for (size_t i = 0; i < ARRAY_SIZE (serial_parity); i++) {
-		if (strcmp (cfg.serial_parity, serial_parity[i]) == 0) {
-			valid_serial_parity_p = true;
-			break;
-		}
-	}
-	for (size_t i = 0; i < ARRAY_SIZE (serial_stopbits); i++) {
-		if (cfg.serial_stopbits == serial_stopbits[i]) {
-			valid_serial_stopbits_p = true;
-			break;
-		}
-	}
 
 	/* Get MAC + IP address.  */
 	if (state == st_config) {
@@ -280,60 +336,19 @@ http_GET_status (void)
 
 	/* Prepare HTML.  */
 	html += "<html><head><title>System Status</title></head><body><form action=\"/config\" method=\"post\"><table>";
-	html += "<tr><th>Wifi SSID:</th><td><input type=\"text\" name=\"wifi_ssid\" maxlength=\"" + String (sizeof (cfg.wifi_ssid) - 1)+ "\" value=\"" + String (cfg.wifi_ssid)+ "\"></td></tr>";
-	html += "<tr><th>Wifi PSK:</th><td><input type=\"text\" name=\"wifi_psk\" maxlength=\"" + String (sizeof (cfg.wifi_psk) - 1) + "\" value=\"" + String (cfg.wifi_psk) + "\"></td></tr>";
-	html += "<tr><th>Title:</th><td><input type=\"text\" name=\"dev_title\" maxlength=\"" + String (cfg.dev_title) + "\" value=\"" + String (cfg.dev_title) + "\"></td></tr>";
-	html += "<tr><th>MQTT/mDNS Name:</th><td><input type=\"text\" name=\"dev_mqtt_name\" maxlength=\"" + String (sizeof (cfg.dev_mqtt_name) - 1)+ "\" value=\"" + String (cfg.dev_mqtt_name)+ "\"></td></tr>";
-	html += "<tr><th>MQTT Server IP:</th><td><input type=\"text\" name=\"mqtt_server_ip\" maxlength=\"" + String (sizeof (cfg.mqtt_server_ip) - 1)+ "\" value=\"" + String (cfg.mqtt_server_ip)+ "\"></td></tr>";
-	html += "<tr><th>MQTT Server Port:</th><td><input type=\"text\" name=\"mqtt_server_port\" maxlength=\"\" value=\"" + String (cfg.mqtt_server_port)+ "\"></td></tr>";
-	html += "<tr><th>Syslog Server IP:</th><td><input type=\"text\" name=\"syslog_ip\" maxlength=\"" + String (sizeof (cfg.syslog_ip) - 1)+ "\" value=\"" + String (cfg.syslog_ip)+ "\"></td></tr>";
-	html += "<tr><th>Serial Speed:</th><td><select name=\"serial_speed\">";
-		for (size_t i = 0; i < ARRAY_SIZE (serial_baud_rate); i++)
-			html += "<option value=\"" + String (serial_baud_rate[i]) + "\""
-			        + ((cfg.serial_speed == serial_baud_rate[i] || ! valid_serial_speed_p)? " selected": "") + ">"
-			        + String (serial_baud_rate[i]) + "</option>";
-	html += "</select></td></tr>";
-	html += "<tr><th>Serial Bitsize:</th><td><select name=\"serial_bits\">";
-		for (size_t i = 0; i < ARRAY_SIZE (serial_bits); i++)
-			html += "<option value=\"" + String (serial_bits[i]) + "\""
-			        + ((cfg.serial_bits == serial_bits[i] || ! valid_serial_bits_p)? " selected": "") + ">"
-			        + String (serial_bits[i]) + "</option>";
-	html += "</select></td></tr>";
-	html += "<tr><th>Serial Parity:</th><td><select name=\"serial_parity\">";
-		for (size_t i = 0; i < ARRAY_SIZE (serial_parity); i++)
-			html += "<option value=\"" + String (serial_parity[i]) + "\""
-			        + ((strcmp (cfg.serial_parity, serial_parity[i]) == 0 || ! valid_serial_parity_p)? " selected": "") + ">"
-			        + String (serial_parity[i]) + "</option>";
-	html += "</select></td></tr>";
-	html += "<tr><th>Serial Stopbits:</th><td><select name=\"serial_stopbits\">";
-		for (size_t i = 0; i < ARRAY_SIZE (serial_stopbits); i++)
-			html += "<option value=\"" + String (serial_stopbits[i]) + "\""
-			        + ((cfg.serial_stopbits == serial_stopbits[i] || ! valid_serial_stopbits_p)? " selected": "") + ">"
-			        + String (serial_stopbits[i]) + "</option>";
-	html += "</select></td></tr>";
-	html += "<tr><th>Relay state after OBI boot:</th><td>";
-		html += "<input type=\"radio\" name=\"relay_on_after_boot_p\" value=\"on\"";
-		html += cfg.relay_on_after_boot_p? " checked": "";
-		html += "><label for=\"on\">on</label>";
-		html += "<input type=\"radio\" name=\"relay_on_after_boot_p\" value=\"off\"";
-		html += (! cfg.relay_on_after_boot_p)? " checked": "";
-		html += "><label for=\"off\">off</label>";
-	html += "<tr><th>After-boot Relay switch-on delay (sec):</th><td><input type=\"text\" name=\"relay_delay_seconds\" value=\"" + String (cfg.relay_delay_seconds) + "\"/></td></tr>";
-	html += "<tr><th>Randomize after-boot delay:</th><td>";
-		html += "<input type=\"radio\" name=\"relay_randomize_delay_p\" value=\"on\"";
-		html += cfg.relay_randomize_delay_p? " checked": "";
-		html += "><label for=\"on\">yes</label>";
-		html += "<input type=\"radio\" name=\"relay_randomize_delay_p\" value=\"off\"";
-		html += (! cfg.relay_randomize_delay_p)? " checked": "";
-		html += "><label for=\"off\">no</label>";
-	html += "<tr><th>Current relay state:</th><td>";
-		html += "<input type=\"radio\" name=\"relay\" value=\"on\"";
-		html += relay_on_p? " checked": "";
-		html += "><label for=\"on\">on</label>";
-		html += "<input type=\"radio\" name=\"relay\" value=\"off\"";
-		html += relay_on_p? "": " checked";
-		html += "><label for=\"off\">off</label>";
-		html += "</td></tr>";
+	html += gen_string_input  ("Wifi SSID",           "wifi_ssid",        sizeof (cfg.wifi_ssid),        cfg.wifi_ssid);
+	html += gen_string_input  ("Wifi PSK",            "wifi_psk",         sizeof (cfg.wifi_psk),         cfg.wifi_psk);
+	html += gen_string_input  ("Device Description",  "dev_title",        sizeof (cfg.dev_title),        cfg.dev_title);
+	html += gen_string_input  ("MQTT/mDNS Name",      "dev_mqtt_name",    sizeof (cfg.dev_mqtt_name),    cfg.dev_mqtt_name);
+	html += gen_string_input  ("MQTT Broker IP",      "mqtt_server_ip",   sizeof (cfg.mqtt_server_ip),   cfg.mqtt_server_ip);
+	html += gen_string_input  ("MQTT Broker Port",    "mqtt_server_port", sizeof (cfg.mqtt_server_port), cfg.mqtt_server_port);
+	html += gen_string_input  ("Syslog Server IP",    "syslog_ip",        sizeof (cfg.syslog_ip),        cfg.syslog_ip);
+	html += gen_long_choice   ("Serial Speed",        "serial_speed",    tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate), 9600, cfg.serial_speed);
+	html += gen_long_choice   ("Serial Bits",         "serial_bits",     tbl_serial_bits,      ARRAY_SIZE (tbl_serial_bits),      8,    cfg.serial_bits);
+	html += gen_string_choice ("Serial Parity",       "serial_parity",   tbl_serial_parity,    ARRAY_SIZE (tbl_serial_parity),    "N",  cfg.serial_parity);
+	html += gen_long_choice   ("Serial Stopbits",     "serial_stopbits", tbl_serial_stopbits,  ARRAY_SIZE (tbl_serial_stopbits),   1,   cfg.serial_stopbits);
+	html += gen_bool_choice   ("Boot-Up Relay state", "relay_on_after_boot_p", "ON", "OFF", cfg.relay_on_after_boot_p);
+	html += gen_bool_choice   ("Current Relay State", "relay",                 "ON", "OFF", relay_on_p);
 	html += "<tr><th>Wifi MAC:</th><td>" + String (mac_formatted) + "</td></tr>";
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
 	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only"): String ("Production")) + "</td></tr>";

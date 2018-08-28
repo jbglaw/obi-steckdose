@@ -17,11 +17,8 @@ Running: 100/900 / 900/100 (depends on Relay on/off)
  Missing stuff
 ~~~~~~~~~~~~~~~
 [ ] MQTT (server:port config, endpoint implementation)
-[ ] Telnet<->serial proxy
+[x] Telnet<->serial proxy
 [ ] Telnet serial extensions
-[ ] Telnet <-> syslog
-[ ] Delayed device power-on after boot
-+       char syslog_ip[16];
-+       char mqtt_server_ip[16];
-+       int mqtt_server_port;
-
+[x] Telnet <-> syslog
+[ ] OTA: https://tttapa.github.io/ESP8266/Chap13%20-%20OTA.html
+[x] Proper flash config checking

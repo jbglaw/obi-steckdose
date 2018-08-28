@@ -2,7 +2,7 @@
 #include "obi-common.h"
 
 static bool wifi_led_enabled_p = false;
-static long last_action = 0;
+static unsigned long last_action = 0;
 
 void
 handle_status_led (void)

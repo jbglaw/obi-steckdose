@@ -1,24 +1,11 @@
 #ifndef OBI_TELNET_H
 #define OBI_TELNET_H
 
-#include <ESP8266WiFi.h>
-
 #define OBI_MAX_TELNET_CLIENTS	3
 #define OBI_TELNET_PORT		23
+#define OBI_SYSLOG_PORT		514
 
-class ObiTelnetClient {
-	public:
-		WiFiClient client;
-};
-class ObiTelnet {
-	public:
-		ObiTelnet ();
-		void begin (void);
-		void handle (void);
-
-	private:
-		WiFiServer *server;
-		ObiTelnetClient client[OBI_MAX_TELNET_CLIENTS];
-};
+extern void telnet_begin (void);
+extern void telnet_handle (void);
 
 #endif /* OBI_TELNET_H  */

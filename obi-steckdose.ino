@@ -18,7 +18,6 @@ bool relay_on_p = false;
 enum state state = st_running;
 
 ESP8266WebServer	http_server (80);
-static ObiTelnet	telnet_server;
 
 /*
  * Relay handling.
@@ -86,10 +85,12 @@ setup (void)
 	}
 
 	relay_set (cfg.relay_on_after_boot_p);	// XXX Delay
+
 	Serial.printf ("Starting STA wifi with %s / %s", cfg.wifi_ssid, cfg.wifi_psk);
 	WiFi.mode (WIFI_STA);
+	if (strlen (cfg.dev_mqtt_name) > 0)
+		WiFi.hostname (cfg.dev_mqtt_name);
 	WiFi.begin (cfg.wifi_ssid, cfg.wifi_psk);
-
 	state = st_connecting;
 	while (WiFi.status () != WL_CONNECTED) {
 		delay (10);
@@ -99,9 +100,9 @@ setup (void)
 
 	/* Bring up all the stuff.  */
 	Serial.begin (cfg.serial_speed, serial_framing ());
-	http_server.begin ();
-	telnet_server.begin ();
 	MDNS.begin (cfg.dev_mqtt_name);
+	http_server.begin ();
+	telnet_begin ();
 	// XXX MQTT
 
 	state = st_running;
@@ -111,7 +112,7 @@ void
 loop (void)
 {
 	http_server.handleClient ();
-	telnet_server.handle ();
+	telnet_handle ();
 	handle_status_led ();
 	handle_button ();
 }
