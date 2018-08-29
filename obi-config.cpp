@@ -95,7 +95,7 @@ config_load (struct obi_config *cfg)
 		cfg->serial_speed = 9600;
 		cfg->serial_bits = 8;
 		cfg->serial_parity[0] = 'N';
-		cfg->serial_stopbits = 2;
+		cfg->serial_stopbits = 1;
 	}
 
 	return ret;
