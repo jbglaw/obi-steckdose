@@ -3,7 +3,7 @@
 # Once:
 git submodule init
 git submodule update
-cd Esp8266-Arduino-Makefile && bash ./esp8266-install.sh
+( cd Esp8266-Arduino-Makefile && bash ./esp8266-install.sh )
 
 # Always:
 make
