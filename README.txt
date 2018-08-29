@@ -3,21 +3,22 @@
 # Once:
 git submodule init
 git submodule update
-cd Esp8266-Arduino-Makefile &&
+cd Esp8266-Arduino-Makefile && bash ./esp8266-install.sh
+
 # Always:
 make
 make upload	# Serial port in Makefile
 
  LED Blinking
 ~~~~~~~~~~~~~~
-Config Mode: 500/500
-Connecting in STA: 100/100
-Running: 100/900 / 900/100 (depends on Relay on/off)
+Config Mode (as AP): 500/500
+Connecting in STA mode: 100/100
+Running (in STA mode): 100/900 / 900/100 (depends on Relay on/off)
 
  Missing stuff
 ~~~~~~~~~~~~~~~
 [ ] MQTT (server:port config, endpoint implementation)
-[x] Telnet<->serial proxy
+[x] network<->serial proxy
 [ ] Telnet serial extensions
 [x] Telnet <-> syslog
 [ ] OTA: https://tttapa.github.io/ESP8266/Chap13%20-%20OTA.html
