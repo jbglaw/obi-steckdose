@@ -22,15 +22,6 @@ static struct telnet_client {
 	},
 };
 
-
-//#define OBI_MAX_TELNET_CLIENTS  3
-//#define OBI_TELNET_PORT         23
-//#define OBI_SYSLOG_PORT         514
-//
-//extern int telnet_begin (void);
-//extern int telnet_handle (void);
-
-
 WiFiServer telnet_server (OBI_TELNET_PORT);
 
 static void
