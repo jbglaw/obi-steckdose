@@ -2,6 +2,7 @@
 #include "obi-config.h"
 #include "obi-http.h"
 #include "obi-misc.h"
+#include "obi-mqtt.h"
 
 const long tbl_serial_baud_rate[] = {
 	75,
@@ -262,7 +263,6 @@ http_POST_config (void)
 
 	if (http_server.hasArg ("relay")) {
 		bool new_relay_on_p = false;
-		relay_on_p;
 
 		if (strcmp (http_server.arg ("relay").c_str (), "on") == 0)
 			new_relay_on_p = true;
@@ -298,6 +298,11 @@ http_POST_config (void)
 			need_config_save_p = true;
 			need_reboot_p = true;
 		}
+	}
+
+	if (http_server.hasArg ("reset")) {
+		if (strcmp (http_server.arg ("reset").c_str (), "yes") == 0)
+			mqtt_trigger_reset ();
 	}
 
 	http_server.sendHeader ("Location", "/status");
@@ -348,10 +353,17 @@ http_GET_status (void)
 	html += gen_string_choice ("Serial Parity",       "serial_parity",   tbl_serial_parity,    ARRAY_SIZE (tbl_serial_parity),    "N",  cfg.serial_parity);
 	html += gen_long_choice   ("Serial Stopbits",     "serial_stopbits", tbl_serial_stopbits,  ARRAY_SIZE (tbl_serial_stopbits),   1,   cfg.serial_stopbits);
 	html += gen_bool_choice   ("Boot-Up Relay state", "relay_on_after_boot_p", "ON", "OFF", cfg.relay_on_after_boot_p);
-	html += gen_bool_choice   ("Current Relay State", "relay",                 "ON", "OFF", relay_on_p);
+	html += gen_bool_choice   ("Current Relay State", "relay",                 "ON", "OFF", relay_get_state ());
 	html += "<tr><th>Wifi MAC:</th><td>" + String (mac_formatted) + "</td></tr>";
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
 	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only"): String ("Production")) + "</td></tr>";
+	html += gen_bool_choice   ("Trigger RESET",       "reset",                 "ON", "OFF", false);
+	html += "<tr><th>GIT Commit:</th><td>";
+	html += OBI_GIT_COMMIT;
+	html += "</td></tr>";
+	html += "<tr><th>Build timestamp:</th><td>";
+	html += OBI_BUILD_DATE;
+	html += "</td></tr>";
 
 	html += "</table>";
 	html += "<input type=\"submit\" value=\"Save\">";

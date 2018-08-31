@@ -27,7 +27,7 @@ handle_status_led (void)
 			break;
 
 		case st_running:
-			if (relay_on_p) {
+			if (relay_get_state ()) {
 				if (wifi_led_enabled_p) {
 					if (last_action + 900 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;

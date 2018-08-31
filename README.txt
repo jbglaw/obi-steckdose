@@ -17,7 +17,7 @@ Running (in STA mode): 100/900 / 900/100 (depends on Relay on/off)
 
  Missing stuff
 ~~~~~~~~~~~~~~~
-[ ] MQTT (server:port config, endpoint implementation)
+[x] MQTT (server:port config, endpoint implementation)
 [x] network<->serial proxy
 [ ] Telnet serial extensions
 [x] Telnet <-> syslog

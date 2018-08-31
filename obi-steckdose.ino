@@ -5,6 +5,7 @@
 #include "obi-common.h"
 #include "obi-config.h"
 #include "obi-http.h"
+#include "obi-mqtt.h"
 #include "obi-misc.h"
 #include "obi-telnet.h"
 #include "obi-status-led.h"
@@ -14,7 +15,7 @@ const int pin_relay_off = 5;
 const int pin_led_wifi = 4;
 const int pin_btn = 14;
 
-bool relay_on_p = false;
+static bool relay_on_p = false;
 enum state state = st_running;
 
 ESP8266WebServer	http_server (80);
@@ -26,6 +27,8 @@ void
 relay_set (bool on_p)
 {
 	int toggle_pin = on_p? pin_relay_on: pin_relay_off;
+	char relay_state[2];
+
 	relay_on_p = on_p;
 
 	/* Put both pins HIGH.  */
@@ -37,9 +40,18 @@ relay_set (bool on_p)
 	delay (50);
 	digitalWrite (toggle_pin, 1);
 
+	snprintf (relay_state, sizeof (relay_state), "%i", (cfg.relay_on_after_boot_p? 1: 0));
+	mqtt_publish (MQTT_SUBSCRIBE_RELAIS, relay_state);
+
 	obi_printf ("Setting relay to %s\r\n", (relay_on_p? "ON": "OFF"));
 
 	return;
+}
+
+bool
+relay_get_state (void)
+{
+	return relay_on_p;
 }
 
 void
@@ -52,6 +64,7 @@ setup (void)
 	pinMode (pin_relay_on, OUTPUT);
 	pinMode (pin_relay_off, OUTPUT);
 
+	/* Set to initial off.  */
 	relay_set (false);
 
 	http_server.on ("/config", HTTP_POST, &http_POST_config);
@@ -84,7 +97,8 @@ setup (void)
 		}
 	}
 
-	relay_set (cfg.relay_on_after_boot_p);	// XXX Delay
+	/* After configuration, set to proper state as early as possible.  */
+	relay_set (cfg.relay_on_after_boot_p);
 
 	Serial.printf ("Starting STA wifi with %s / %s", cfg.wifi_ssid, cfg.wifi_psk);
 	WiFi.mode (WIFI_STA);
@@ -103,7 +117,10 @@ setup (void)
 	MDNS.begin (cfg.dev_mqtt_name);
 	http_server.begin ();
 	telnet_begin ();
-	// XXX MQTT
+	mqtt_begin ();
+
+	/* Publish initial relais state after MQTT server should be up.  */
+	relay_set (cfg.relay_on_after_boot_p);
 
 	state = st_running;
 }
@@ -113,6 +130,7 @@ loop (void)
 {
 	http_server.handleClient ();
 	telnet_handle ();
+	mqtt_handle ();
 	handle_status_led ();
 	handle_button ();
 }

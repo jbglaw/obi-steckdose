@@ -96,6 +96,7 @@ config_load (struct obi_config *cfg)
 		cfg->serial_bits = 8;
 		cfg->serial_parity[0] = 'N';
 		cfg->serial_stopbits = 1;
+		snprintf (cfg->mqtt_server_port, sizeof (cfg->mqtt_server_port), "%i", 1883);
 	}
 
 	return ret;

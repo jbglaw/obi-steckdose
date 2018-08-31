@@ -4,3 +4,6 @@
 [submodule "libraries/Syslog"]
 	path = libraries/Syslog
 	url = https://github.com/arcao/Syslog
+[submodule "libraries/PubSubClient"]
+	path = libraries/PubSubClient
+	url = https://github.com/knolleary/pubsubclient.git

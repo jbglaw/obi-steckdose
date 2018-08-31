@@ -29,10 +29,10 @@ handle_button (void)
 	    && millis () > button_press_detected_millis + 500) {
 
 		obi_printf ("Setting relay from %s to %s\r\n",
-		            (relay_on_p? "on": "off"),
-		            (relay_on_p? "off": "on"));
+		            (relay_get_state()? "on": "off"),
+		            (relay_get_state()? "off": "on"));
 
-		relay_set (! relay_on_p);
+		relay_set (! relay_get_state ());
 		button_action_done_p = true;
 	}
 }

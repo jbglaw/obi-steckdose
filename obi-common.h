@@ -14,6 +14,7 @@
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof(x[0]))
 
 extern void relay_set (bool on_p);
+extern bool relay_get_state (void);
 
 extern const int pin_relay_on;
 extern const int pin_relay_off;
@@ -26,6 +27,5 @@ enum state {
 	st_running
 };
 extern enum state state;
-extern bool relay_on_p;
 
 #endif /* OBI_COMMON_H  */
