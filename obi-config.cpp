@@ -3,6 +3,8 @@
 #include "obi-config.h"
 #include "obi-misc.h"
 #include "obi-http.h"
+#include "obi-telnet.h"
+#include "obi-mqtt.h"
 
 /* Globally used.  */
 struct obi_config cfg;
@@ -13,13 +15,13 @@ string_terminated_p (const char *start, size_t len) {
 }
 
 static bool
-is_ip_address_p (const char *start, size_t len)
+is_ip_address_or_hostname_p (const char *start, size_t len)
 {
 	return string_terminated_p (start, len);	// XXX harder check?
 }
 
 static bool
-ip_ip_port_p (const char *start, size_t len)
+is_ip_port_p (const char *start, size_t len)
 {
 	long lng;
 
@@ -63,28 +65,27 @@ config_load (struct obi_config *cfg)
 	int ret = -1;
 	struct obi_config tmp;
 	byte *ptr = (byte *) &tmp;
-	bool config_good_p = true;
 
 	obi_println ("Config: Load");
 
 	/* Read config.  */
 	EEPROM.begin (sizeof (*cfg));
-	for (int i = 0; i < sizeof (*cfg); i++)
+	for (size_t i = 0; i < sizeof (*cfg); i++)
 		ptr[i] = EEPROM.read (i);
 	EEPROM.end ();
 
 	/* Check checksum.  */
-	for (int i = sizeof (cfg->_checksum); i < sizeof (*cfg); i++)
+	for (size_t i = sizeof (cfg->_checksum); i < sizeof (*cfg); i++)
 		checksum += ptr[i];
 	if (checksum == tmp._checksum
 	    && string_terminated_p (tmp.wifi_ssid,     sizeof (tmp.wifi_ssid))
 	    && string_terminated_p (tmp.wifi_psk,      sizeof (tmp.wifi_psk))
 	    && string_terminated_p (tmp.dev_mqtt_name, sizeof (tmp.dev_mqtt_name))
 	    && string_terminated_p (tmp.dev_title,     sizeof (tmp.dev_title))
-	    && long_in_table (tmp.serial_speed, tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate))
-	    && long_in_table (tmp.serial_bits,  tbl_serial_bits,      ARRAY_SIZE (tbl_serial_bits))
+	    && long_in_table (tmp.serial_speed,    tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate))
+	    && long_in_table (tmp.serial_bits,     tbl_serial_bits,      ARRAY_SIZE (tbl_serial_bits))
 	    && string_in_table (tmp.serial_parity, sizeof (tmp.serial_parity), tbl_serial_parity, ARRAY_SIZE (tbl_serial_parity))
-	    && long_in_table (tmp.serial_stopbits, tbl_serial_stopbits, ARRAY_SIZE (tbl_serial_stopbits))) {
+	    && long_in_table (tmp.serial_stopbits, tbl_serial_stopbits,  ARRAY_SIZE (tbl_serial_stopbits))) {
 
 		ret = 0;
 		obi_printf ("Config: Checksum okay (0x%02x)\r\n", checksum);
@@ -96,7 +97,9 @@ config_load (struct obi_config *cfg)
 		cfg->serial_bits = 8;
 		cfg->serial_parity[0] = 'N';
 		cfg->serial_stopbits = 1;
-		snprintf (cfg->mqtt_server_port, sizeof (cfg->mqtt_server_port), "%i", 1883);
+		snprintf (cfg->mqtt_server_port, sizeof (cfg->mqtt_server_port), "%i", OBI_MQTT_PORT_DEFAULT);
+		snprintf (cfg->syslog_port,      sizeof (cfg->syslog_port),      "%i", OBI_SYSLOG_PORT_DEFAULT);
+		snprintf (cfg->telnet_port,      sizeof (cfg->telnet_port),      "%i", OBI_TELNET_PORT_DEFAULT);
 	}
 
 	return ret;
@@ -112,12 +115,12 @@ config_save (struct obi_config *cfg)
 
 	/* Calculate checksum.  */
 	cfg->_checksum = 0;
-	for (int i = sizeof (cfg->_checksum); i < sizeof (*cfg); i++)
+	for (size_t i = sizeof (cfg->_checksum); i < sizeof (*cfg); i++)
 		cfg->_checksum += ptr[i];
 
 	/* Write flash.  */
 	EEPROM.begin (sizeof (*cfg));
-	for (int i = 0; i < sizeof (*cfg); i++)
+	for (size_t i = 0; i < sizeof (*cfg); i++)
 		EEPROM.write (i, ptr[i]);
 	ret = EEPROM.commit ();
 	EEPROM.end ();

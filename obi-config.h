@@ -17,9 +17,11 @@ struct obi_config {
 
 	bool relay_on_after_boot_p;
 
-	char syslog_ip[16];
-	char mqtt_server_ip[16];
+	char syslog_host[128];
+	char syslog_port[128];
+	char mqtt_server_host[128];
 	char mqtt_server_port[6];
+	char telnet_port[6];
 	bool enable_telnet_negotiation_p;
 	bool syslog_sent_to_serial_p;
 	bool syslog_recv_from_serial_p;

@@ -270,19 +270,19 @@ http_POST_config (void)
 		relay_set (new_relay_on_p);
 	}
 
-	if (http_server.hasArg ("syslog_ip")
-	    && http_server.arg("syslog_ip").length () < sizeof (cfg.syslog_ip) - 1) {
-		if (strcmp (http_server.arg("syslog_ip").c_str (), cfg.syslog_ip) != 0) {
-			strncpy (cfg.syslog_ip, http_server.arg("syslog_ip").c_str (), sizeof (cfg.syslog_ip));
+	if (http_server.hasArg ("syslog_host")
+	    && http_server.arg("syslog_host").length () < sizeof (cfg.syslog_host) - 1) {
+		if (strcmp (http_server.arg("syslog_host").c_str (), cfg.syslog_host) != 0) {
+			strncpy (cfg.syslog_host, http_server.arg("syslog_host").c_str (), sizeof (cfg.syslog_host));
 			need_config_save_p = true;
 			need_reboot_p = true;
 		}
 	}
 
-	if (http_server.hasArg ("mqtt_server_ip")
-	    && http_server.arg("mqtt_server_ip").length () < sizeof (cfg.mqtt_server_ip) - 1) {
-		if (strcmp (http_server.arg("mqtt_server_ip").c_str (), cfg.mqtt_server_ip) != 0) {
-			strncpy (cfg.mqtt_server_ip, http_server.arg("mqtt_server_ip").c_str (), sizeof (cfg.mqtt_server_ip));
+	if (http_server.hasArg ("mqtt_server_host")
+	    && http_server.arg("mqtt_server_host").length () < sizeof (cfg.mqtt_server_host) - 1) {
+		if (strcmp (http_server.arg("mqtt_server_host").c_str (), cfg.mqtt_server_host) != 0) {
+			strncpy (cfg.mqtt_server_host, http_server.arg("mqtt_server_host").c_str (), sizeof (cfg.mqtt_server_host));
 			need_config_save_p = true;
 			need_reboot_p = true;
 		}
@@ -345,9 +345,9 @@ http_GET_status (void)
 	html += gen_string_input  ("Wifi PSK",            "wifi_psk",         sizeof (cfg.wifi_psk),         cfg.wifi_psk);
 	html += gen_string_input  ("Device Description",  "dev_title",        sizeof (cfg.dev_title),        cfg.dev_title);
 	html += gen_string_input  ("MQTT/mDNS Name",      "dev_mqtt_name",    sizeof (cfg.dev_mqtt_name),    cfg.dev_mqtt_name);
-	html += gen_string_input  ("MQTT Broker IP",      "mqtt_server_ip",   sizeof (cfg.mqtt_server_ip),   cfg.mqtt_server_ip);
+	html += gen_string_input  ("MQTT Broker IP",      "mqtt_server_host", sizeof (cfg.mqtt_server_host), cfg.mqtt_server_host);
 	html += gen_string_input  ("MQTT Broker Port",    "mqtt_server_port", sizeof (cfg.mqtt_server_port), cfg.mqtt_server_port);
-	html += gen_string_input  ("Syslog Server IP",    "syslog_ip",        sizeof (cfg.syslog_ip),        cfg.syslog_ip);
+	html += gen_string_input  ("Syslog Server IP",    "syslog_host",      sizeof (cfg.syslog_host),      cfg.syslog_host);
 	html += gen_long_choice   ("Serial Speed",        "serial_speed",    tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate), 9600, cfg.serial_speed);
 	html += gen_long_choice   ("Serial Bits",         "serial_bits",     tbl_serial_bits,      ARRAY_SIZE (tbl_serial_bits),      8,    cfg.serial_bits);
 	html += gen_string_choice ("Serial Parity",       "serial_parity",   tbl_serial_parity,    ARRAY_SIZE (tbl_serial_parity),    "N",  cfg.serial_parity);

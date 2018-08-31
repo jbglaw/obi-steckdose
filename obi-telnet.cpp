@@ -22,7 +22,7 @@ static struct telnet_client {
 	},
 };
 
-WiFiServer telnet_server (OBI_TELNET_PORT);
+WiFiServer telnet_server (OBI_TELNET_PORT_DEFAULT);
 
 static void
 syslog_format_buf (char *outbuf, size_t outbuf_len, uint8_t *inbuf, size_t inbuf_len)
@@ -39,8 +39,12 @@ syslog_format_buf (char *outbuf, size_t outbuf_len, uint8_t *inbuf, size_t inbuf
 void
 telnet_begin (void)
 {
-	if (strlen (cfg.syslog_ip) > 0) {
-		syslog.server (cfg.syslog_ip, OBI_SYSLOG_PORT);
+	if (strlen (cfg.syslog_host) > 0
+	    && strlen (cfg.syslog_port) > 0
+	    && atoi (cfg.syslog_port) > 0
+	    && atoi (cfg.syslog_port) < 6536) {
+
+		syslog.server (cfg.syslog_host, atoi (cfg.syslog_port));
 		if (strlen (cfg.dev_mqtt_name) > 0)
 			syslog.deviceHostname (cfg.dev_mqtt_name);
 		syslog.appName ("obi-steckdose");
@@ -50,7 +54,7 @@ telnet_begin (void)
 	//  syslog.logf(LOG_INFO, "This is info message no. %d", iteration);
 	//  syslog.log(LOG_INFO, F("End loop"));
 
-	telnet_server.begin ();
+	telnet_server.begin (atoi (cfg.telnet_port));
 
 	return;
 }

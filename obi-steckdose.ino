@@ -41,7 +41,7 @@ relay_set (bool on_p)
 	digitalWrite (toggle_pin, 1);
 
 	snprintf (relay_state, sizeof (relay_state), "%i", (cfg.relay_on_after_boot_p? 1: 0));
-	mqtt_publish (MQTT_SUBSCRIBE_RELAIS, relay_state);
+	mqtt_publish (OBI_MQTT_SUBSCRIBE_RELAY, relay_state);
 
 	obi_printf ("Setting relay to %s\r\n", (relay_on_p? "ON": "OFF"));
 
