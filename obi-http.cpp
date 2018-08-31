@@ -142,6 +142,86 @@ gen_string_input (const char *title, const char *cfg_option, size_t buflen, cons
 	return ret;
 }
 
+static bool
+parse_bool (const char *cfg_option, bool *dst)
+{
+	bool ret_p = false;
+	bool new_value_p;
+
+	if (http_server.hasArg (cfg_option)
+	    && (strcmp (http_server.arg (cfg_option).c_str (), "yes") == 0
+	        || strcmp (http_server.arg (cfg_option).c_str (), "no") == 0)) {
+
+		new_value_p = strcmp (http_server.arg (cfg_option).c_str (), "on") == 0;
+		if (*dst != new_value_p) {
+			*dst = new_value_p;
+			ret_p = true;
+		}
+	}
+
+	return ret_p;
+}
+
+static bool
+parse_long_choice (const char *cfg_option, const long *data, size_t num, long *dst)
+{
+	bool ret_p = false;
+	long new_value;
+
+	if (http_server.hasArg (cfg_option)) {
+		new_value = atol (http_server.arg (cfg_option).c_str ());
+
+		for (size_t i = 0; i < num; i++) {
+			if (data[i] == new_value
+			    && *dst != new_value) {
+				*dst = new_value;
+				ret_p = true;
+				break;
+			}
+		}
+	}
+
+	return ret_p;
+}
+
+static bool
+parse_string_choice (const char *cfg_option, const char **data, size_t num, char *dst, size_t dst_len)
+{
+	bool ret_p = false;
+	long new_value;
+
+	if (http_server.hasArg (cfg_option)
+	    && strlen (http_server.arg (cfg_option).c_str ()) < dst_len) {
+
+		for (size_t i = 0; i < num; i++) {
+			if (strcmp (data[i], http_server.arg (cfg_option).c_str ()) == 0) {
+				if (strcmp (dst, http_server.arg (cfg_option).c_str ()) != 0) {
+					strncpy (dst, http_server.arg (cfg_option).c_str (), dst_len);
+					ret_p = true;
+				}
+				break;
+			}
+		}
+	}
+
+	return ret_p;
+}
+
+static bool
+parse_string_input (const char *cfg_option, char *dst, size_t dst_len)
+{
+	bool ret_p = false;
+	long new_value;
+
+	if (http_server.hasArg (cfg_option)
+	    && strlen (http_server.arg (cfg_option).c_str ()) < dst_len) {
+
+		strncpy (dst, http_server.arg (cfg_option).c_str (), dst_len);
+		ret_p = true;
+	}
+
+	return ret_p;
+}
 
 
 void
@@ -150,45 +230,28 @@ http_POST_config (void)
 	bool need_config_save_p = false;
 	bool need_reboot_p = false;
 	bool need_serial_change_p = false;
+	bool ret_p;
 
 	/* Dump arguments.  */
 	for (int i = 0; i < http_server.args (); i++)
 		obi_printf ("%s=%s\r\n", http_server.argName(i).c_str (), http_server.arg(i).c_str ());
 
-	if (http_server.hasArg ("wifi_ssid")
-	    && http_server.arg("wifi_ssid").length () < sizeof (cfg.wifi_ssid) - 1) {
-		if (strcmp (http_server.arg("wifi_ssid").c_str (), cfg.wifi_ssid) != 0) {
-			strncpy (cfg.wifi_ssid, http_server.arg("wifi_ssid").c_str (), sizeof (cfg.wifi_ssid));
-			need_config_save_p = true;
-			need_reboot_p = true;
-		}
-	}
 
-	if (http_server.hasArg ("wifi_psk")
-	    && http_server.arg("wifi_psk").length () < sizeof (cfg.wifi_psk) - 1) {
-		if (strcmp (http_server.arg("wifi_psk").c_str (), cfg.wifi_psk) != 0) {
-			strncpy (cfg.wifi_psk, http_server.arg("wifi_psk").c_str (), sizeof (cfg.wifi_psk));
-			need_config_save_p = true;
-			need_reboot_p = true;
-		}
-	}
+	/* Parse all config values.  */
+	ret_p = parse_string_input ("wifi_ssid", cfg.wifi_ssid, sizeof (cfg.wifi_ssid));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
 
-	if (http_server.hasArg ("dev_mqtt_name")
-	    && http_server.arg("dev_mqtt_name").length () < sizeof (cfg.dev_mqtt_name) - 1) {
-		if (strcmp (http_server.arg("dev_mqtt_name").c_str (), cfg.dev_mqtt_name) != 0) {
-			strncpy (cfg.dev_mqtt_name, http_server.arg("dev_mqtt_name").c_str (), sizeof (cfg.dev_mqtt_name));
-			need_config_save_p = true;
-			need_reboot_p = true;
-		}
-	}
+	ret_p = parse_string_input ("wifi_psk", cfg.wifi_psk, sizeof (cfg.wifi_psk));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
 
-	if (http_server.hasArg ("dev_title")
-	    && http_server.arg("dev_title").length () < sizeof (cfg.dev_title) - 1) {
-		if (strcmp (http_server.arg("dev_title").c_str (), cfg.dev_title) != 0) {
-			strncpy (cfg.dev_title, http_server.arg("dev_title").c_str (), sizeof (cfg.dev_title));
-			need_config_save_p = true;
-		}
-	}
+	ret_p = parse_string_input ("dev_mqtt_name", cfg.dev_mqtt_name, sizeof (cfg.dev_mqtt_name));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
+
+	ret_p = parse_string_input ("dev_title", cfg.dev_title, sizeof (cfg.dev_title));
+	need_config_save_p |= ret_p;
 
 	if (http_server.hasArg ("serial_speed")) {
 		long serial_speed = atol (http_server.arg("serial_speed").c_str ());
@@ -354,10 +417,10 @@ http_GET_status (void)
 	html += gen_long_choice   ("Serial Stopbits",     "serial_stopbits", tbl_serial_stopbits,  ARRAY_SIZE (tbl_serial_stopbits),   1,   cfg.serial_stopbits);
 	html += gen_bool_choice   ("Boot-Up Relay state", "relay_on_after_boot_p", "ON", "OFF", cfg.relay_on_after_boot_p);
 	html += gen_bool_choice   ("Current Relay State", "relay",                 "ON", "OFF", relay_get_state ());
+	html += gen_bool_choice   ("Trigger RESET",       "reset",                 "ON", "OFF", false);
 	html += "<tr><th>Wifi MAC:</th><td>" + String (mac_formatted) + "</td></tr>";
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
 	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only"): String ("Production")) + "</td></tr>";
-	html += gen_bool_choice   ("Trigger RESET",       "reset",                 "ON", "OFF", false);
 	html += "<tr><th>GIT Commit:</th><td>";
 	html += OBI_GIT_COMMIT;
 	html += "</td></tr>";
