@@ -213,10 +213,10 @@ static bool
 parse_string_input (const char *cfg_option, char *dst, size_t dst_len)
 {
 	bool ret_p = false;
-	long new_value;
 
 	if (http_server.hasArg (cfg_option)
-	    && strlen (http_server.arg (cfg_option).c_str ()) < dst_len) {
+	    && strlen (http_server.arg (cfg_option).c_str ()) < dst_len
+	    && strcmp (http_server.arg (cfg_option).c_str (), dst) != 0) {
 
 		strncpy (dst, http_server.arg (cfg_option).c_str (), dst_len);
 		ret_p = true;
@@ -242,66 +242,83 @@ http_POST_config (void)
 	 * Parse all config-related values.
 	 */
 	ret_p = parse_string_input (HTTP_ARG_WIFI_SSID, cfg.wifi_ssid, sizeof (cfg.wifi_ssid));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_WIFI_SSID, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_WIFI_PSK, cfg.wifi_psk, sizeof (cfg.wifi_psk));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_WIFI_PSK, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_MQTT_NAME, cfg.dev_mqtt_name, sizeof (cfg.dev_mqtt_name));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_MQTT_NAME, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_DEV_DESCR, cfg.dev_descr, sizeof (cfg.dev_descr));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_DEV_DESCR, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
 	ret_p = parse_long_choice (HTTP_ARG_SERIAL_SPEED, tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate), &cfg.serial_speed);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SERIAL_SPEED, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_serial_change_p |= ret_p;
 
 	ret_p = parse_long_choice (HTTP_ARG_SERIAL_BITS, tbl_serial_bits, ARRAY_SIZE (tbl_serial_bits), &cfg.serial_bits);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SERIAL_BITS, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_serial_change_p |= ret_p;
 
 	ret_p = parse_string_choice (HTTP_ARG_SERIAL_PARITY, tbl_serial_parity, ARRAY_SIZE (tbl_serial_parity), cfg.serial_parity, sizeof (cfg.serial_parity));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SERIAL_PARITY, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_serial_change_p |= ret_p;
 
 	ret_p = parse_long_choice (HTTP_ARG_SERIAL_STOPBITS, tbl_serial_stopbits, ARRAY_SIZE (tbl_serial_stopbits), &cfg.serial_stopbits);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SERIAL_STOPBITS, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_serial_change_p |= ret_p;
 
 	ret_p = parse_bool (HTTP_ARG_RELAY_BOOT_STATE, &cfg.relay_on_after_boot_p);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_RELAY_BOOT_STATE, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_SYSLOG_HOST, cfg.syslog_host, sizeof (cfg.syslog_host));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SYSLOG_HOST, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_SYSLOG_PORT, cfg.syslog_port, sizeof (cfg.syslog_port));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SYSLOG_PORT, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_HOST, cfg.mqtt_server_host, sizeof (cfg.mqtt_server_host));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_MQTT_SERVER_HOST, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_PORT, cfg.mqtt_server_port, sizeof (cfg.mqtt_server_port));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_MQTT_SERVER_PORT, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_string_input (HTTP_ARG_TELNET_PORT, cfg.telnet_port, sizeof (cfg.telnet_port));
+	obi_printf ("%s: %s\r\n", HTTP_ARG_TELNET_PORT, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
 	ret_p = parse_bool (HTTP_ARG_ENABLE_TELNET_PROTO, &cfg.enable_telnet_negotiation_p);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_ENABLE_TELNET_PROTO, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
 	ret_p = parse_bool (HTTP_ARG_SYSLOG_IP_TO_SERIAL, &cfg.syslog_sent_to_serial_p);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SYSLOG_IP_TO_SERIAL, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
 	ret_p = parse_bool (HTTP_ARG_SYSLOG_SERIAL_TO_IP, &cfg.syslog_recv_from_serial_p);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SYSLOG_SERIAL_TO_IP, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
 	/*
@@ -321,7 +338,7 @@ http_POST_config (void)
 	/* OTA Update URL.  */
 	if (http_server.hasArg (HTTP_ARG_OTA_UPDATE_URL) && http_server.arg(HTTP_ARG_OTA_UPDATE_URL).length () > 0) {
 		t_httpUpdate_return ret = ESPhttpUpdate.update (http_server.arg (HTTP_ARG_OTA_UPDATE_URL), OBI_GIT_COMMIT);
-		obi_printf ("OTA Update tried to download %s, ret = %i\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
+		obi_printf ("OTA Update tried to download %s, ret = %i\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
 	}
 
 	/* New relay state.  */

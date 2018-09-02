@@ -2,9 +2,9 @@
 #define OBI_COMMON_H
 
 #if 1
-#  define obi_print(...)	Serial.print(__VA_ARGS__)
-#  define obi_printf(...)	Serial.printf(__VA_ARGS__)
-#  define obi_println(...)	Serial.println(__VA_ARGS__)
+#  define obi_print(...)	do { Serial.print(__VA_ARGS__); Serial.flush (); } while (0)
+#  define obi_printf(...)	do { Serial.printf(__VA_ARGS__); Serial.flush (); } while (0)
+#  define obi_println(...)	do { Serial.println(__VA_ARGS__); Serial.flush (); } while (0)
 #else
 #  define obi_print(...)
 #  define obi_printf(...)
