@@ -97,6 +97,8 @@ config_load (struct obi_config *cfg)
 		cfg->serial_bits = 8;
 		cfg->serial_parity[0] = 'N';
 		cfg->serial_stopbits = 1;
+		cfg->syslog_recv_from_serial_p = true;
+		cfg->enable_telnet_negotiation_p = true;
 		snprintf (cfg->mqtt_server_port, sizeof (cfg->mqtt_server_port), "%i", OBI_MQTT_PORT_DEFAULT);
 		snprintf (cfg->syslog_port,      sizeof (cfg->syslog_port),      "%i", OBI_SYSLOG_PORT_DEFAULT);
 		snprintf (cfg->telnet_port,      sizeof (cfg->telnet_port),      "%i", OBI_TELNET_PORT_DEFAULT);
