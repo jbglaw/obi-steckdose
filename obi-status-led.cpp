@@ -13,7 +13,6 @@ handle_status_led (void)
 			if (last_action + 500 < millis ()) {
 				wifi_led_enabled_p = ! wifi_led_enabled_p;
 				digitalWrite (pin_led_wifi, wifi_led_enabled_p);
-				relay_set (wifi_led_enabled_p);
 				last_action = millis ();
 			}
 			break;
