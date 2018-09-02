@@ -1,3 +1,5 @@
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
 #include "obi-common.h"
 #include "obi-config.h"
 #include "obi-http.h"
@@ -227,8 +229,8 @@ parse_string_input (const char *cfg_option, char *dst, size_t dst_len)
 void
 http_POST_config (void)
 {
-	bool need_config_save_p = false;
 	bool need_reboot_p = false;
+	bool need_config_save_p = false;
 	bool need_serial_change_p = false;
 	bool ret_p;
 
@@ -236,135 +238,107 @@ http_POST_config (void)
 	for (int i = 0; i < http_server.args (); i++)
 		obi_printf ("%s=%s\r\n", http_server.argName(i).c_str (), http_server.arg(i).c_str ());
 
-
-	/* Parse all config values.  */
-	ret_p = parse_string_input ("wifi_ssid", cfg.wifi_ssid, sizeof (cfg.wifi_ssid));
+	/*
+	 * Parse all config-related values.
+	 */
+	ret_p = parse_string_input (HTTP_ARG_WIFI_SSID, cfg.wifi_ssid, sizeof (cfg.wifi_ssid));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input ("wifi_psk", cfg.wifi_psk, sizeof (cfg.wifi_psk));
+	ret_p = parse_string_input (HTTP_ARG_WIFI_PSK, cfg.wifi_psk, sizeof (cfg.wifi_psk));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input ("dev_mqtt_name", cfg.dev_mqtt_name, sizeof (cfg.dev_mqtt_name));
+	ret_p = parse_string_input (HTTP_ARG_MQTT_NAME, cfg.dev_mqtt_name, sizeof (cfg.dev_mqtt_name));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input ("dev_title", cfg.dev_title, sizeof (cfg.dev_title));
+	ret_p = parse_string_input (HTTP_ARG_DEV_DESCR, cfg.dev_descr, sizeof (cfg.dev_descr));
 	need_config_save_p |= ret_p;
 
-	if (http_server.hasArg ("serial_speed")) {
-		long serial_speed = atol (http_server.arg("serial_speed").c_str ());
-		bool speed_okay_p = false;
+	ret_p = parse_long_choice (HTTP_ARG_SERIAL_SPEED, tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate), &cfg.serial_speed);
+	need_config_save_p |= ret_p;
+	need_serial_change_p |= ret_p;
 
-		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_baud_rate); i++)
-			if (tbl_serial_baud_rate[i] == serial_speed)
-				speed_okay_p = true;
+	ret_p = parse_long_choice (HTTP_ARG_SERIAL_BITS, tbl_serial_bits, ARRAY_SIZE (tbl_serial_bits), &cfg.serial_bits);
+	need_config_save_p |= ret_p;
+	need_serial_change_p |= ret_p;
 
-		if (speed_okay_p && serial_speed != cfg.serial_speed) {
-			cfg.serial_speed = serial_speed;
-			need_config_save_p = true;
-			need_serial_change_p = true;
-		}
+	ret_p = parse_string_choice (HTTP_ARG_SERIAL_PARITY, tbl_serial_parity, ARRAY_SIZE (tbl_serial_parity), cfg.serial_parity, sizeof (cfg.serial_parity));
+	need_config_save_p |= ret_p;
+	need_serial_change_p |= ret_p;
+
+	ret_p = parse_long_choice (HTTP_ARG_SERIAL_STOPBITS, tbl_serial_stopbits, ARRAY_SIZE (tbl_serial_stopbits), &cfg.serial_stopbits);
+	need_config_save_p |= ret_p;
+	need_serial_change_p |= ret_p;
+
+	ret_p = parse_bool (HTTP_ARG_RELAY_BOOT_STATE, &cfg.relay_on_after_boot_p);
+	need_config_save_p |= ret_p;
+
+	ret_p = parse_string_input (HTTP_ARG_SYSLOG_HOST, cfg.syslog_host, sizeof (cfg.syslog_host));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
+
+	ret_p = parse_string_input (HTTP_ARG_SYSLOG_PORT, cfg.syslog_port, sizeof (cfg.syslog_port));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
+
+	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_HOST, cfg.mqtt_server_host, sizeof (cfg.mqtt_server_host));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
+
+	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_PORT, cfg.mqtt_server_port, sizeof (cfg.mqtt_server_port));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
+
+	ret_p = parse_string_input (HTTP_ARG_TELNET_PORT, cfg.telnet_port, sizeof (cfg.telnet_port));
+	need_config_save_p |= ret_p;
+	need_reboot_p |= ret_p;
+
+	ret_p = parse_bool (HTTP_ARG_ENABLE_TELNET_PROTO, &cfg.enable_telnet_negotiation_p);
+	need_config_save_p |= ret_p;
+
+	ret_p = parse_bool (HTTP_ARG_SYSLOG_IP_TO_SERIAL, &cfg.syslog_sent_to_serial_p);
+	need_config_save_p |= ret_p;
+
+	ret_p = parse_bool (HTTP_ARG_SYSLOG_SERIAL_TO_IP, &cfg.syslog_recv_from_serial_p);
+	need_config_save_p |= ret_p;
+
+	/*
+	 * Act upon config changes.
+	 */
+	if (need_config_save_p)
+		config_save (&cfg);
+	if (need_reboot_p)
+		ESP.restart ();
+	if (need_serial_change_p)
+		Serial.begin (cfg.serial_speed, serial_framing ());
+
+	/*
+	 * Handle special calls.
+	 */
+
+	/* OTA Update URL.  */
+	if (http_server.hasArg (HTTP_ARG_OTA_UPDATE_URL) && http_server.arg(HTTP_ARG_OTA_UPDATE_URL).length () > 0) {
+		t_httpUpdate_return ret = ESPhttpUpdate.update (http_server.arg (HTTP_ARG_OTA_UPDATE_URL), OBI_GIT_COMMIT);
+		obi_printf ("OTA Update tried to download %s, ret = %i\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
 	}
 
-	if (http_server.hasArg ("serial_bits")) {
-		int this_serial_bits = atoi (http_server.arg("serial_bits").c_str ());
-		bool bits_okay_p = false;
+	/* New relay state.  */
+	{
+		bool new_relay_on_p = relay_get_state ();
 
-		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_bits); i++)
-			if (tbl_serial_bits[i] == this_serial_bits)
-				bits_okay_p = true;
-
-		if (bits_okay_p && this_serial_bits != cfg.serial_bits) {
-			cfg.serial_bits = this_serial_bits;
-			need_config_save_p = true;
-			need_serial_change_p = true;
-		}
+		ret_p = parse_bool (HTTP_ARG_NEW_RELAY_STATE, &new_relay_on_p);
+		if (ret_p)
+			relay_set (new_relay_on_p);
 	}
 
-	if (http_server.hasArg ("serial_parity")) {
-		bool parity_okay_p = false;
+	/* Reset trigger.  */
+	{
+		bool trigger_reset_p = false;
 
-		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_parity); i++)
-			if (strcmp (tbl_serial_parity[i], http_server.arg ("serial_parity").c_str ()) == 0)
-				parity_okay_p = true;
-
-		if (parity_okay_p && strcmp (cfg.serial_parity, http_server.arg("serial_parity").c_str ()) != 0) {
-			strncpy (cfg.serial_parity, http_server.arg("serial_parity").c_str (), sizeof (cfg.serial_parity));
-			need_config_save_p = true;
-			need_serial_change_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("serial_stopbits")) {
-		int this_serial_stopbits = atol (http_server.arg ("serial_stopbits").c_str ());
-		bool stopbits_okay_p = false;
-
-		for (size_t i = 0; i < ARRAY_SIZE (tbl_serial_stopbits); i++)
-			if (tbl_serial_stopbits[i] == this_serial_stopbits)
-				stopbits_okay_p = true;
-
-		if (stopbits_okay_p && this_serial_stopbits != cfg.serial_stopbits) {
-			cfg.serial_stopbits = this_serial_stopbits;
-			need_config_save_p = true;
-			need_serial_change_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("relay_on_after_boot_p")) {
-		bool relay_on_after_boot_p = false;
-
-		if (strcmp (http_server.arg ("relay_on_after_boot_p").c_str (), "on") == 0)
-			relay_on_after_boot_p = true;
-
-		if (relay_on_after_boot_p != cfg.relay_on_after_boot_p) {
-			cfg.relay_on_after_boot_p = relay_on_after_boot_p;
-			need_config_save_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("relay")) {
-		bool new_relay_on_p = false;
-
-		if (strcmp (http_server.arg ("relay").c_str (), "on") == 0)
-			new_relay_on_p = true;
-
-		relay_set (new_relay_on_p);
-	}
-
-	if (http_server.hasArg ("syslog_host")
-	    && http_server.arg("syslog_host").length () < sizeof (cfg.syslog_host) - 1) {
-		if (strcmp (http_server.arg("syslog_host").c_str (), cfg.syslog_host) != 0) {
-			strncpy (cfg.syslog_host, http_server.arg("syslog_host").c_str (), sizeof (cfg.syslog_host));
-			need_config_save_p = true;
-			need_reboot_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("mqtt_server_host")
-	    && http_server.arg("mqtt_server_host").length () < sizeof (cfg.mqtt_server_host) - 1) {
-		if (strcmp (http_server.arg("mqtt_server_host").c_str (), cfg.mqtt_server_host) != 0) {
-			strncpy (cfg.mqtt_server_host, http_server.arg("mqtt_server_host").c_str (), sizeof (cfg.mqtt_server_host));
-			need_config_save_p = true;
-			need_reboot_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("mqtt_server_port")) {
-		const char *mqtt_server_port = http_server.arg ("mqtt_server_port").c_str ();
-
-		if (strcmp (mqtt_server_port, cfg.mqtt_server_port) != 0
-		    && atol (mqtt_server_port) > 1
-		    && atol (mqtt_server_port) < 6536) {
-			memcpy (cfg.mqtt_server_port, http_server.arg("mqtt_server_port").c_str (), sizeof (cfg.mqtt_server_port));
-			need_config_save_p = true;
-			need_reboot_p = true;
-		}
-	}
-
-	if (http_server.hasArg ("reset")) {
-		if (strcmp (http_server.arg ("reset").c_str (), "yes") == 0)
+		ret_p = parse_bool (HTTP_ARG_TRIGGER_RESET, &trigger_reset_p);
+		if (ret_p && trigger_reset_p)
 			mqtt_trigger_reset ();
 	}
 
@@ -404,23 +378,30 @@ http_GET_status (void)
 
 	/* Prepare HTML.  */
 	html += "<html><head><title>System Status</title></head><body><form action=\"/config\" method=\"post\"><table>";
-	html += gen_string_input  ("Wifi SSID",           "wifi_ssid",        sizeof (cfg.wifi_ssid),        cfg.wifi_ssid);
-	html += gen_string_input  ("Wifi PSK",            "wifi_psk",         sizeof (cfg.wifi_psk),         cfg.wifi_psk);
-	html += gen_string_input  ("Device Description",  "dev_title",        sizeof (cfg.dev_title),        cfg.dev_title);
-	html += gen_string_input  ("MQTT/mDNS Name",      "dev_mqtt_name",    sizeof (cfg.dev_mqtt_name),    cfg.dev_mqtt_name);
-	html += gen_string_input  ("MQTT Broker IP",      "mqtt_server_host", sizeof (cfg.mqtt_server_host), cfg.mqtt_server_host);
-	html += gen_string_input  ("MQTT Broker Port",    "mqtt_server_port", sizeof (cfg.mqtt_server_port), cfg.mqtt_server_port);
-	html += gen_string_input  ("Syslog Server IP",    "syslog_host",      sizeof (cfg.syslog_host),      cfg.syslog_host);
-	html += gen_long_choice   ("Serial Speed",        "serial_speed",    tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate), 9600, cfg.serial_speed);
-	html += gen_long_choice   ("Serial Bits",         "serial_bits",     tbl_serial_bits,      ARRAY_SIZE (tbl_serial_bits),      8,    cfg.serial_bits);
-	html += gen_string_choice ("Serial Parity",       "serial_parity",   tbl_serial_parity,    ARRAY_SIZE (tbl_serial_parity),    "N",  cfg.serial_parity);
-	html += gen_long_choice   ("Serial Stopbits",     "serial_stopbits", tbl_serial_stopbits,  ARRAY_SIZE (tbl_serial_stopbits),   1,   cfg.serial_stopbits);
-	html += gen_bool_choice   ("Boot-Up Relay state", "relay_on_after_boot_p", "ON", "OFF", cfg.relay_on_after_boot_p);
-	html += gen_bool_choice   ("Current Relay State", "relay",                 "ON", "OFF", relay_get_state ());
-	html += gen_bool_choice   ("Trigger RESET",       "reset",                 "ON", "OFF", false);
+	html += gen_string_input  ("Wifi SSID",              HTTP_ARG_WIFI_SSID,           sizeof (cfg.wifi_ssid),        cfg.wifi_ssid);
+	html += gen_string_input  ("Wifi PSK",               HTTP_ARG_WIFI_PSK,            sizeof (cfg.wifi_psk),         cfg.wifi_psk);
+	html += gen_string_input  ("Device Description",     HTTP_ARG_DEV_DESCR,           sizeof (cfg.dev_descr),        cfg.dev_descr);
+	html += gen_string_input  ("MQTT/mDNS Name",         HTTP_ARG_MQTT_NAME,           sizeof (cfg.dev_mqtt_name),    cfg.dev_mqtt_name);
+	html += gen_string_input  ("MQTT Broker IP",         HTTP_ARG_MQTT_SERVER_HOST,    sizeof (cfg.mqtt_server_host), cfg.mqtt_server_host);
+	html += gen_string_input  ("MQTT Broker Port",       HTTP_ARG_MQTT_SERVER_PORT,    sizeof (cfg.mqtt_server_port), cfg.mqtt_server_port);
+	html += gen_string_input  ("Syslog Server IP/Name",  HTTP_ARG_SYSLOG_HOST,         sizeof (cfg.syslog_host),      cfg.syslog_host);
+	html += gen_string_input  ("Syslog Server Port",     HTTP_ARG_SYSLOG_PORT,         sizeof (cfg.syslog_port),      cfg.syslog_port);
+	html += gen_bool_choice   ("Syslog IP->Serial",      HTTP_ARG_SYSLOG_IP_TO_SERIAL, "Yes",  "No",                  cfg.syslog_sent_to_serial_p);
+	html += gen_bool_choice   ("Syslog Serial->IP",      HTTP_ARG_SYSLOG_SERIAL_TO_IP, "Yes",  "No",                  cfg.syslog_recv_from_serial_p);
+	html += gen_long_choice   ("Serial Speed",           HTTP_ARG_SERIAL_SPEED,        tbl_serial_baud_rate,          ARRAY_SIZE (tbl_serial_baud_rate), 9600, cfg.serial_speed);
+	html += gen_long_choice   ("Serial Bits",            HTTP_ARG_SERIAL_BITS,         tbl_serial_bits,               ARRAY_SIZE (tbl_serial_bits),      8,    cfg.serial_bits);
+	html += gen_string_choice ("Serial Parity",          HTTP_ARG_SERIAL_PARITY,       tbl_serial_parity,             ARRAY_SIZE (tbl_serial_parity),    "N",  cfg.serial_parity);
+	html += gen_long_choice   ("Serial Stopbits",        HTTP_ARG_SERIAL_STOPBITS,     tbl_serial_stopbits,           ARRAY_SIZE (tbl_serial_stopbits),  1,    cfg.serial_stopbits);
+	html += gen_string_input  ("Raw/Telnet Port",        HTTP_ARG_TELNET_PORT,         sizeof (cfg.telnet_port),      cfg.telnet_port);
+	html += gen_bool_choice   ("Enable TELNET Protocol", HTTP_ARG_ENABLE_TELNET_PROTO, "Yes",    "No",                cfg.enable_telnet_negotiation_p);
+	html += gen_bool_choice   ("Boot-Up Relay state",    HTTP_ARG_RELAY_BOOT_STATE,    "On",     "Off",               cfg.relay_on_after_boot_p);
+
+	html += gen_bool_choice   ("Current Relay State",    HTTP_ARG_NEW_RELAY_STATE,     "On",     "Off",               relay_get_state ());
+	html += gen_bool_choice   ("Trigger RESET",          HTTP_ARG_TRIGGER_RESET,       "Reset!", "Keep running",      false);
+	html += gen_string_input  ("Load OTA Update from URL",HTTP_ARG_OTA_UPDATE_URL,     256,                           "");
 	html += "<tr><th>Wifi MAC:</th><td>" + String (mac_formatted) + "</td></tr>";
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
-	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only"): String ("Production")) + "</td></tr>";
+	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only / AP"): String ("Production / STA")) + "</td></tr>";
 	html += "<tr><th>GIT Commit:</th><td>";
 	html += OBI_GIT_COMMIT;
 	html += "</td></tr>";
@@ -433,4 +414,13 @@ http_GET_status (void)
 	html += "</form></body></html>";
 
 	http_server.send (200, "text/html", html.c_str ());
+}
+
+void
+http_X_not_found (void)
+{
+	http_server.sendHeader ("Location", "/status");
+	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/status\">status</a>.</body></html>");
+
+	return;
 }

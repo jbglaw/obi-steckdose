@@ -21,5 +21,5 @@ Running (in STA mode): 100/900 / 900/100 (depends on Relay on/off)
 [x] network<->serial proxy
 [ ] Telnet serial extensions
 [x] Telnet <-> syslog
-[ ] OTA: https://tttapa.github.io/ESP8266/Chap13%20-%20OTA.html
+[x] OTA: https://tttapa.github.io/ESP8266/Chap13%20-%20OTA.html
 [x] Proper flash config checking

@@ -69,6 +69,7 @@ setup (void)
 
 	http_server.on ("/config", HTTP_POST, &http_POST_config);
 	http_server.on ("/status", HTTP_GET,  &http_GET_status);
+	http_server.onNotFound (&http_X_not_found);
 	http_server.begin ();
 
 	/* Enable config-only mode?  */
