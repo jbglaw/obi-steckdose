@@ -154,7 +154,7 @@ parse_bool (const char *cfg_option, bool *dst)
 	    && (strcmp (http_server.arg (cfg_option).c_str (), "yes") == 0
 	        || strcmp (http_server.arg (cfg_option).c_str (), "no") == 0)) {
 
-		new_value_p = strcmp (http_server.arg (cfg_option).c_str (), "on") == 0;
+		new_value_p = strcmp (http_server.arg (cfg_option).c_str (), "yes") == 0;
 		if (*dst != new_value_p) {
 			*dst = new_value_p;
 			ret_p = true;
