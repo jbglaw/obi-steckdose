@@ -20,6 +20,10 @@ enum state state = st_running;
 
 ESP8266WebServer	http_server (80);
 
+static WiFiUDP udpClient;
+Syslog syslog (udpClient);
+bool have_syslog_p = false;
+
 /*
  * Relay handling.
  */
@@ -44,6 +48,8 @@ relay_set (bool on_p)
 	mqtt_publish (OBI_MQTT_SUBSCRIBE_RELAY, relay_state);
 
 	obi_printf ("Setting relay to %s\r\n", (relay_on_p? "ON": "OFF"));
+	syslog.logf (LOG_CRIT, "OBI-Steckdose %s: Setting Relay to %s",
+	             cfg.dev_mqtt_name, (relay_on_p? "ON": "OFF"));
 
 	return;
 }
@@ -53,6 +59,7 @@ relay_get_state (void)
 {
 	return relay_on_p;
 }
+
 
 void
 setup (void)
@@ -112,6 +119,20 @@ setup (void)
 		handle_status_led ();
 	}
 	WiFi.setAutoReconnect (true);
+
+	/* Init syslog.  */
+	if (strlen (cfg.syslog_host) > 0
+	    && strlen (cfg.syslog_port) > 0
+	    && atoi (cfg.syslog_port) > 0
+	    && atoi (cfg.syslog_port) < 6536) {
+
+		syslog.server (cfg.syslog_host, atoi (cfg.syslog_port));
+		if (strlen (cfg.dev_mqtt_name) > 0)
+			syslog.deviceHostname (cfg.dev_mqtt_name);
+		syslog.appName ("obi-steckdose");
+		have_syslog_p = true;
+		syslog.logf (LOG_CRIT, "OBI-Steckdose %s starting up in STA mode.", cfg.dev_mqtt_name);
+	}
 
 	/* Bring up all the stuff.  */
 	Serial.begin (cfg.serial_speed, serial_framing ());
