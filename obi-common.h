@@ -1,6 +1,8 @@
 #ifndef OBI_COMMON_H
 #define OBI_COMMON_H
 
+#include "Syslog.h"
+
 #if 1
 #  define obi_print(...)	do { Serial.print(__VA_ARGS__); Serial.flush (); } while (0)
 #  define obi_printf(...)	do { Serial.printf(__VA_ARGS__); Serial.flush (); } while (0)
@@ -27,5 +29,8 @@ enum state {
 	st_running
 };
 extern enum state state;
+
+extern Syslog syslog;
+extern bool have_syslog_p;
 
 #endif /* OBI_COMMON_H  */
