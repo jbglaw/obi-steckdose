@@ -51,8 +51,7 @@ relay_set (bool on_p)
 	mqtt_publish (OBI_MQTT_SUBSCRIBE_RELAY, relay_state);
 
 	obi_printf ("Setting relay to %s\r\n", (relay_on_p? "ON": "OFF"));
-	syslog.logf (LOG_CRIT, "OBI-Steckdose %s: Setting Relay to %s",
-	             cfg.dev_mqtt_name, (relay_on_p? "ON": "OFF"));
+	syslog.logf (LOG_CRIT, "Setting Relay to %s", (relay_on_p? "ON": "OFF"));
 
 	return;
 }
@@ -132,9 +131,10 @@ setup (void)
 		syslog.server (cfg.syslog_host, atoi (cfg.syslog_port));
 		if (strlen (cfg.dev_mqtt_name) > 0)
 			syslog.deviceHostname (cfg.dev_mqtt_name);
-		syslog.appName ("obi-steckdose");
+		syslog.appName ("firmware");
 		have_syslog_p = true;
-		syslog.logf (LOG_CRIT, "OBI-Steckdose %s starting up in STA mode.", cfg.dev_mqtt_name);
+		syslog.logf (LOG_CRIT, "OBI-Steckdose `%s' starting up in STA mode using GIT=%s built at %s",
+		             cfg.dev_mqtt_name, obi_git_commit, obi_build_timestamp);
 	}
 
 	/* Bring up all the stuff.  */

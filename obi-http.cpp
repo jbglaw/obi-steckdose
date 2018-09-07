@@ -337,8 +337,11 @@ http_POST_config (void)
 
 	/* OTA Update URL.  */
 	if (http_server.hasArg (HTTP_ARG_OTA_UPDATE_URL) && http_server.arg(HTTP_ARG_OTA_UPDATE_URL).length () > 0) {
+		syslog.logf (LOG_CRIT, "Trying to update firmware from %s",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str ());
+		obi_printf (           "Trying to update firmware from %s\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str ());
 		t_httpUpdate_return ret = ESPhttpUpdate.update (http_server.arg (HTTP_ARG_OTA_UPDATE_URL), OBI_GIT_COMMIT);
-		obi_printf ("OTA Update tried to download %s, ret = %i\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
+		syslog.logf (LOG_CRIT, "Failed to do OTA update from %s, ret = %i",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
+		obi_printf (           "Failed to do OTA update from %s, ret = %i\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
 	}
 
 	/* New relay state.  */
