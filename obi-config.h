@@ -31,5 +31,6 @@ extern struct obi_config cfg;
 
 extern int config_load (struct obi_config *cfg);
 extern int config_save (struct obi_config *cfg);
+extern bool long_in_table (long lng, const long *tbl, size_t num);
 
 #endif /* OBI_CONFIG_H  */

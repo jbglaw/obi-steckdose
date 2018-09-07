@@ -35,7 +35,7 @@ is_ip_port_p (const char *start, size_t len)
 	return true;
 }
 
-static bool
+bool
 long_in_table (long lng, const long *tbl, size_t num)
 {
 	for (size_t i = 0; i < num; i++)
