@@ -83,7 +83,7 @@ mqtt_trigger_reset (void)
 	reset_relay_active_p = true;
 	reset_relay_on_millis = millis ();
 	// XXX Switch on RESET relay, aka. Wifi LED.
-	syslog.logf (LOG_CRIT, "OBI-Steckdose %s: Triggering RESET", cfg.dev_mqtt_name);
+	syslog.logf (LOG_CRIT, "Triggering RESET");
 
 	return;
 }
@@ -95,7 +95,7 @@ mqtt_handle (void)
 	    && reset_relay_on_millis + 250 < millis ()) {
 
 		// XXX Switch off RESET relay, aka. Wifi LED.
-		syslog.logf (LOG_CRIT, "OBI-Steckdose %s: Releasing RESET", cfg.dev_mqtt_name);
+		syslog.logf (LOG_CRIT, "Releasing RESET");
 		reset_relay_active_p = false;
 	}
 
