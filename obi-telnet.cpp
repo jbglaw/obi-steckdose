@@ -3,6 +3,7 @@
 #include "obi-common.h"
 #include "obi-misc.h"
 #include "obi-config.h"
+#include "obi-http.h"
 #include "obi-telnet.h"
 
 #define UART0_DEFAULT_RxX_PIN	3
@@ -11,9 +12,14 @@
 #define UART0_GPIO_FUNCTION	FUNCTION_3
 
 enum telnet_state {
+	/* Stated during connection start-up, while TELNET vs. raw detection is
+	   running. If the first few bytes are a TELNET request, connection
+	   continues as TN_normal, otherwise it becomes (and stays)
+	   TN_transparent for it's whole lifetime.  */
 	TN_init,
 	TN_transparent,
 
+	/* Regular TELNET state machine.  */
 	TN_normal,
 	TN_iac,
 	TN_will,
@@ -413,17 +419,63 @@ telnet_handle (void)
 								break;
 
 							case TN_setBaud:
-								/* XXX */
-								telnet_client[i].state = TN_end;
+								tn_baud |= ((uint32_t) ser_buf[bufidx]) << (24-8*tn_baudCnt);
+								tn_baudCnt++;
+								if (tn_baudCnt == 4) {
+									if (long_in_table (tn_baud, tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate))) {
+										cfg.serial_speed = tn_baud;
+										Serial.begin (cfg.serial_speed, serial_framing ());
+										config_save (&cfg);
+									} else if (tn_baud == 0) {
+										char respBuf[10] = { T_IAC, T_SB, T_OPT_COMPORT, T_SUB_COMPORT_SETBAUD,
+										                     (unsigned char) ((cfg.serial_speed >> 24) & 0xff),
+										                     (unsigned char) ((cfg.serial_speed >> 16) & 0xff),
+										                     (unsigned char) ((cfg.serial_speed >>  8) & 0xff),
+										                     (unsigned char) ((cfg.serial_speed >>  0) & 0xff), T_IAC, T_SE };
+										telnet_client[i].client.write (respBuf, sizeof (respBuf));
+									}
+									telnet_client[i].state = TN_end;
+								}
 								break;
 
 							case TN_setParity:
-								/* XXX */
+								if (ser_buf[bufidx] == 0) {
+									char respBuf[7] = { T_IAC, T_SB, T_OPT_COMPORT, T_SUB_COMPORT_SETPARITY, 1/*none*/, T_IAC, T_SE };
+									if (strcmp (cfg.serial_parity, "N") == 0)
+										respBuf[4] = 1;
+									else if (strcmp (cfg.serial_parity, "O") == 0)
+										respBuf[4] = 2;
+									else if (strcmp (cfg.serial_parity, "E") == 0)
+										respBuf[4] = 3;
+									telnet_client[i].client.write (respBuf, sizeof (respBuf));
+								} else {
+									if (ser_buf[bufidx] == 1)
+										cfg.serial_parity[0] = 'N';
+									else if (ser_buf[bufidx] == 2)
+										cfg.serial_parity[0] = 'O';
+									else if (ser_buf[bufidx] == 3)
+										cfg.serial_parity[0] = 'E';
+									Serial.begin (cfg.serial_speed, serial_framing ());
+									config_save (&cfg);
+								}
 								telnet_client[i].state = TN_end;
 								break;
 
 							case TN_setStopSize:
-								/* XXX */
+								if (ser_buf[bufidx] == 0) {
+									char respBuf[7] = { T_IAC, T_SB, T_OPT_COMPORT, T_SUB_COMPORT_SETSTOPSIZE, 1/* 1 stop bit*/, T_IAC, T_SE };
+									if (cfg.serial_stopbits == 1)
+										respBuf[4] = 1;
+									else if (cfg.serial_stopbits == 2)
+										respBuf[4] = 2;
+									telnet_client[i].client.write (respBuf, sizeof (respBuf));
+								} else {
+									if (long_in_table (ser_buf[bufidx], tbl_serial_stopbits, ARRAY_SIZE (tbl_serial_stopbits))) {
+										cfg.serial_stopbits = ser_buf[bufidx];
+										Serial.begin (cfg.serial_speed, serial_framing ());
+										config_save (&cfg);
+									}
+								}
 								telnet_client[i].state = TN_end;
 								break;
 						}
