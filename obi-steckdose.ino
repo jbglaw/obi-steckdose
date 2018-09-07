@@ -18,11 +18,14 @@ const int pin_btn = 14;
 static bool relay_on_p = false;
 enum state state = st_running;
 
-ESP8266WebServer	http_server (80);
 
 static WiFiUDP udpClient;
 Syslog syslog (udpClient);
 bool have_syslog_p = false;
+ESP8266WebServer http_server (80);
+/* Keep these two in obi-steckdose.ino so that they're up-to-date for every build.  */
+const char obi_git_commit[] = OBI_GIT_COMMIT;
+const char obi_build_timestamp[] = OBI_BUILD_TIMESTAMP;
 
 /*
  * Relay handling.

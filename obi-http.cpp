@@ -420,10 +420,10 @@ http_GET_status (void)
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
 	html += "<tr><th>Mode:</th><td>" + (state == st_config? String ("Config-Only / AP"): String ("Production / STA")) + "</td></tr>";
 	html += "<tr><th>GIT Commit:</th><td>";
-	html += OBI_GIT_COMMIT;
+	html += obi_git_commit;
 	html += "</td></tr>";
 	html += "<tr><th>Build timestamp:</th><td>";
-	html += OBI_BUILD_DATE;
+	html += obi_build_timestamp;
 	html += "</td></tr>";
 
 	html += "</table>";

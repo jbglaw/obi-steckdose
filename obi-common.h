@@ -32,5 +32,7 @@ extern enum state state;
 
 extern Syslog syslog;
 extern bool have_syslog_p;
+extern const char obi_git_commit[];
+extern const char obi_build_timestamp[];
 
 #endif /* OBI_COMMON_H  */
