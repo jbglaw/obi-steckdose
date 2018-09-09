@@ -95,7 +95,7 @@ syslog_send_buffer (const char *prefix, byte *inbuf, size_t inbuf_len)
 			max = BYTES_PER_LINE;
 
 		syslog_format_buf (hexline, sizeof (hexline), asciiline, sizeof (asciiline), inbuf + done, max);
-		syslog.logf (LOG_INFO, "%s %s%s |%s|", cfg.dev_mqtt_name, prefix, hexline, asciiline);
+		syslog.logf (LOG_INFO, "%s%*s |%*s|", prefix, -3*BYTES_PER_LINE, hexline, -BYTES_PER_LINE, asciiline);
 
 		done += max;
 	}
