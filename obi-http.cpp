@@ -337,11 +337,22 @@ http_POST_config (void)
 
 	/* OTA Update URL.  */
 	if (http_server.hasArg (HTTP_ARG_OTA_UPDATE_URL) && http_server.arg(HTTP_ARG_OTA_UPDATE_URL).length () > 0) {
-		syslog.logf (LOG_CRIT, "Trying to update firmware from %s",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str ());
-		obi_printf (           "Trying to update firmware from %s\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str ());
+		syslog.logf (LOG_CRIT, "Trying to update firmware from %s, current GIT=%s built at %s",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), obi_git_commit, obi_build_timestamp);
+		obi_printf (           "Trying to update firmware from %s, current GIT=%s built at %s\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), obi_git_commit, obi_build_timestamp);
+		ESPhttpUpdate.rebootOnUpdate (false);
 		t_httpUpdate_return ret = ESPhttpUpdate.update (http_server.arg (HTTP_ARG_OTA_UPDATE_URL), OBI_GIT_COMMIT);
-		syslog.logf (LOG_CRIT, "Failed to do OTA update from %s, ret = %i",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
-		obi_printf (           "Failed to do OTA update from %s, ret = %i\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
+		syslog.logf (LOG_CRIT, "After OTA update from %s, ret = %i",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
+		obi_printf (           "After OTA update from %s, ret = %i\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), (int) ret);
+		if (ret == HTTP_UPDATE_OK) {
+			syslog.logf (LOG_CRIT, "Update successful, rebooting...");
+			obi_printf (           "Update successful, rebooting...\r\n");
+			/* Allow network and Serial to drain.  */
+			delay (2000);
+			ESP.restart ();
+		} else {
+			syslog.logf (LOG_CRIT, "Update failed, will not reboot.");
+			obi_printf (           "Update failed, will not reboot.\r\n");
+		}
 	}
 
 	/* New relay state.  */

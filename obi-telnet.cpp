@@ -186,6 +186,7 @@ push_tx_data (byte *buf, size_t len)
 
 		done += max_len;
 		len -= max_len;
+		buf_tx_len += max_len;
 
 		if (buf_tx_len == sizeof (buf_tx))
 			syslog_send_tx_data (true);
@@ -212,6 +213,7 @@ push_rx_data (byte *buf, size_t len)
 
 		done += max_len;
 		len -= max_len;
+		buf_rx_len += max_len;
 
 		if (buf_rx_len == sizeof (buf_rx))
 			syslog_send_rx_data (true);
@@ -499,6 +501,10 @@ telnet_handle (void)
 			}
 		}
 	}
+
+	/* Send data to Syslog every now and then.  */
+	syslog_send_rx_data (false);
+	syslog_send_tx_data (false);
 
 	return;
 }
