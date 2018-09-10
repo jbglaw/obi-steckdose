@@ -34,6 +34,26 @@ enum telnet_state {
 	TN_purgeData,
 };
 
+static struct telnet_state_name {
+	enum telnet_state state;
+	const char *name;
+} telnet_state_name[]= {
+	{ TN_init,		"TN_init",	},
+	{ TN_transparent,	"TN_transparent",	},
+	{ TN_normal,		"TN_normal",		},
+	{ TN_iac,		"TN_iac",		},
+	{ TN_will,		"TN_will",		},
+	{ TN_start,		"TN_start",		},
+	{ TN_end,		"TN_end",		},
+	{ TN_comPort,		"TN_comPort",		},
+	{ TN_setControl,	"TN_setControl",	},
+	{ TN_setBaud,		"TN_setBaud",		},
+	{ TN_setDataSize,	"TN_setDataSize",	},
+	{ TN_setParity,		"TN_setParity",		},
+	{ TN_setStopSize,	"TN_setStopSize",	},
+	{ TN_purgeData,		"TN_purgeData",		},
+};
+
 static byte buf_rx[1024];
 static byte buf_tx[1024];
 static size_t buf_rx_len = 0;
@@ -68,7 +88,7 @@ syslog_format_buf (char *outbuf, size_t outbuf_len, char *asciibuf, size_t ascii
 	for (size_t i = 0; i < inbuf_len; i++) {		// XXX overflow
 		sprintf (hexbuf, " %02x", inbuf[i]);
 		strcat (outbuf, hexbuf);
-		if (isprint (inbuf[i])) {
+		if (isalnum (inbuf[i])) {
 			asciibuf[i]   = inbuf[i];
 			asciibuf[i+1] = '\0';
 		} else {
@@ -136,9 +156,6 @@ syslog_send_tx_data (bool force_p)
 void
 telnet_begin (void)
 {
-	//  syslog.logf(LOG_INFO, "This is info message no. %d", iteration);
-	//  syslog.log(LOG_INFO, F("End loop"));
-
 	telnet_server.begin (atoi (cfg.telnet_port));
 
 	return;
@@ -222,6 +239,34 @@ push_rx_data (byte *buf, size_t len)
 	return;
 }
 
+static void
+telnet_progress (size_t client_num, enum telnet_state new_state)
+{
+	const char *from = NULL;
+	const char *to = NULL;
+
+	if (client_num < 0 || client_num > ARRAY_SIZE (telnet_client))
+		return;
+
+	for (size_t i = 0; i < ARRAY_SIZE (telnet_state_name); i++) {
+		if (telnet_state_name[i].state == telnet_client[client_num].state)
+			from = telnet_state_name[i].name;
+		if (telnet_state_name[i].state == new_state)
+			to = telnet_state_name[i].name;
+	}
+
+	telnet_client[client_num].state = new_state;
+
+	if (! from)
+		from = "unknown";
+	if (! to)
+		to = "unknown";
+
+	syslog.logf (LOG_INFO, "*[%i]: %s -> %s", (int) client_num, from, to);	// JJ
+
+	return;
+}
+
 static unsigned long tn_baud;
 static size_t tn_baudCnt;
 
@@ -240,9 +285,10 @@ telnet_handle (void)
 		for (size_t i = 0; i < ARRAY_SIZE (telnet_client); i++) {
 			if (! telnet_client[i].active_p) {
 				telnet_client[i].client = new_client;
-				telnet_client[i].state = cfg.enable_telnet_negotiation_p? TN_init: TN_transparent;
+				telnet_progress (i, (cfg.enable_telnet_negotiation_p? TN_init: TN_transparent));
 				telnet_client[i].active_p = true;
 				found_slot_p = true;
+				break;
 			}
 		}
 
@@ -269,10 +315,10 @@ telnet_handle (void)
 				    && read_len >= 2
 				    && ser_buf[0] == T_IAC
 				    && (ser_buf[1] == T_WILL || ser_buf[1] == T_DO))
-					telnet_client[i].state = TN_normal;
+					telnet_progress (i, TN_normal);
 				/* Not detected? Then it's plain pass-through.  */
 				if (telnet_client[i].state == TN_init)
-					telnet_client[i].state = TN_transparent;
+					telnet_progress (i, TN_transparent);
 
 				if (telnet_client[i].state == TN_transparent) {
 					if (cfg.syslog_sent_to_serial_p)
@@ -283,7 +329,7 @@ telnet_handle (void)
 						switch (telnet_client[i].state) {
 							case TN_normal:
 								if (ser_buf[bufidx] == T_IAC)
-									telnet_client[i].state = TN_iac;
+									telnet_progress (i, TN_iac);
 								else {
 									if (cfg.syslog_sent_to_serial_p)
 										push_tx_data (&ser_buf[bufidx], 1);
@@ -297,19 +343,19 @@ telnet_handle (void)
 										if (cfg.syslog_sent_to_serial_p)
 											push_tx_data (&ser_buf[bufidx], 1);
 										Serial.write (ser_buf[bufidx]);
-										telnet_client[i].state = TN_normal;
+										telnet_progress (i, TN_normal);
 										break;
 
 									case T_WILL:
-										telnet_client[i].state = TN_will;
+										telnet_progress (i, TN_will);
 										break;
 
 									case T_SB:
-										telnet_client[i].state = TN_start;
+										telnet_progress (i, TN_start);
 										break;
 
 									case T_SE:
-										telnet_client[i].state = TN_normal;
+										telnet_progress (i, TN_normal);
 										break;
 
 									default:
@@ -329,52 +375,52 @@ telnet_handle (void)
 								if (ser_buf[bufidx] == T_OPT_COMPORT)
 									respBuf[1] = T_DO;
 								telnet_client[i].client.write (respBuf, sizeof (respBuf));
-								telnet_client[i].state = TN_normal;
+								telnet_progress (i, TN_normal);
 								break;
 							}
 
 							case TN_start:
 								if (ser_buf[bufidx] == T_OPT_COMPORT)
-									telnet_client[i].state = TN_comPort;
+									telnet_progress (i, TN_comPort);
 								else
-									telnet_client[i].state = TN_end;
+									telnet_progress (i, TN_end);
 								break;
 
 							case TN_end:
 								if (ser_buf[bufidx] == T_IAC)
-									telnet_client[i].state = TN_iac;
+									telnet_progress (i, TN_iac);
 								break;
 
 							case TN_comPort:
 								switch (ser_buf[bufidx]) {
 									case T_SUB_COMPORT_SETCONTROL:
-										telnet_client[i].state = TN_setControl;
+										telnet_progress (i, TN_setControl);
 										break;
 
 									case T_SUB_COMPORT_SETDATASIZE:
-										telnet_client[i].state = TN_setDataSize;
+										telnet_progress (i, TN_setDataSize);
 										break;
 
 									case T_SUB_COMPORT_SETPARITY:
-										telnet_client[i].state = TN_setParity;
+										telnet_progress (i, TN_setParity);
 										break;
 
 									case T_SUB_COMPORT_SETSTOPSIZE:
-										telnet_client[i].state = TN_setStopSize;
+										telnet_progress (i, TN_setStopSize);
 										break;
 
 									case T_SUB_COMPORT_SETBAUD:
-										telnet_client[i].state = TN_setBaud;
+										telnet_progress (i, TN_setBaud);
 										tn_baudCnt = 0;
 										tn_baud = 0;
 										break;
 
 									case T_SUB_COMPORT_PURGEDATA:
-										telnet_client[i].state = TN_purgeData;
+										telnet_progress (i, TN_purgeData);
 										break;
 
 									default:
-										telnet_client[i].state = TN_end;
+										telnet_progress (i, TN_end);
 										break;
 								}
 								break;
@@ -385,7 +431,7 @@ telnet_handle (void)
 										Serial.flush ();
 										break;
 								}
-								telnet_client[i].state = TN_end;
+								telnet_progress (i, TN_end);
 								break;
 
 							case TN_setControl:
@@ -404,7 +450,7 @@ telnet_handle (void)
 										telnet_break_stop ();
 										break;
 								}
-								telnet_client[i].state = TN_end;
+								telnet_progress (i, TN_end);
 								break;
 
 							case TN_setDataSize:
@@ -417,7 +463,7 @@ telnet_handle (void)
 									char respBuf[7] = { T_IAC, T_SB, T_OPT_COMPORT, T_SUB_COMPORT_SETDATASIZE, (char) cfg.serial_bits, T_IAC, T_SE };
 									telnet_client[i].client.write (respBuf, sizeof (respBuf));
 								}
-								telnet_client[i].state = TN_end;
+								telnet_progress (i, TN_end);
 								break;
 
 							case TN_setBaud:
@@ -436,7 +482,7 @@ telnet_handle (void)
 										                     (unsigned char) ((cfg.serial_speed >>  0) & 0xff), T_IAC, T_SE };
 										telnet_client[i].client.write (respBuf, sizeof (respBuf));
 									}
-									telnet_client[i].state = TN_end;
+									telnet_progress (i, TN_end);
 								}
 								break;
 
@@ -460,7 +506,7 @@ telnet_handle (void)
 									Serial.begin (cfg.serial_speed, serial_framing ());
 									config_save (&cfg);
 								}
-								telnet_client[i].state = TN_end;
+								telnet_progress (i, TN_end);
 								break;
 
 							case TN_setStopSize:
@@ -478,7 +524,7 @@ telnet_handle (void)
 										config_save (&cfg);
 									}
 								}
-								telnet_client[i].state = TN_end;
+								telnet_progress (i, TN_end);
 								break;
 						}
 					} /* for each ser_buf[byte]  */
