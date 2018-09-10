@@ -18,7 +18,6 @@ const int pin_btn = 14;
 static bool relay_on_p = false;
 enum state state = st_running;
 
-
 static WiFiUDP udpClient;
 Syslog syslog (udpClient);
 bool have_syslog_p = false;
@@ -34,7 +33,7 @@ void
 relay_set (bool on_p)
 {
 	int toggle_pin = on_p? pin_relay_on: pin_relay_off;
-	char relay_state[2];
+	char relay_state[10];
 
 	relay_on_p = on_p;
 
@@ -47,7 +46,7 @@ relay_set (bool on_p)
 	delay (50);
 	digitalWrite (toggle_pin, 1);
 
-	snprintf (relay_state, sizeof (relay_state), "%i", (cfg.relay_on_after_boot_p? 1: 0));
+	snprintf (relay_state, sizeof (relay_state), "%i", (relay_on_p? "on": "off"));
 	mqtt_publish (OBI_MQTT_SUBSCRIBE_RELAY, relay_state);
 
 	obi_printf ("Setting relay to %s\r\n", (relay_on_p? "ON": "OFF"));
