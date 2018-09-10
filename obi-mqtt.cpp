@@ -11,38 +11,66 @@ static bool mqtt_active_p = false;
 static WiFiClient espClient;
 static PubSubClient mqtt_client (espClient);
 
-static void
-mqtt_callback (char *topic, byte *payload, unsigned int len)
-{
-	obi_printf ("Message arrived [%s], len = %u\n", topic, len);
-	for (unsigned int i = 0; i < len; i++)
-		obi_print ((char) payload[i]);
-	obi_println ();
 
-	/* Handle "device=0" and "device=1".  */
+static void
+mqtt_callback (char *_topic, uint8_t *_payload, unsigned int len)
+{
+	char *payload = (char *) _payload;
+	char *slash;
+	char *topic;
+
+	obi_printf ("Message arrived [%s], len = %u\r\n", _topic, len);
+	for (unsigned int i = 0; i < len; i++)
+		obi_print (payload[i]);
+	obi_println ("");
+
+	/* Find real topic. It's <devname>/topic, so find the slash and
+	   continue after it.  */
+	slash = strchr (_topic, '/');
+	if (! slash)
+		return;
+	topic = &slash[1];
+
+	/* Handle "<devname>/device=on" and "<devname>/device=off".  */
 	if (strcmp (topic, OBI_MQTT_SUBSCRIBE_RELAY) == 0) {
-		if (len >= 1 && payload[0] == '1')
+		if (len == 2 && strncmp (payload, "on", strlen ("on")) == 0)
 			relay_set (true);
-		else if (len >= 1 && payload[0] == '0')
+		else if (len == 3 && strncmp (payload, "off", strlen ("off")) == 0)
 			relay_set (false);
 	}
 
-	/* Handle "reset=1".  */
+	/* Handle "<devname>/reset=trigger".  */
 	if (strcmp (topic, OBI_MQTT_SUBSCRIBE_RESET) == 0)
-		if (len >= 1 && payload[0] == '1')
+		if (len == 7 && strncmp (payload, "trigger", strlen ("trigger")) == 0)
 			mqtt_trigger_reset ();
+
+	return;
 }
 
 static void
 mqtt_reconnect (void)
 {
+	String mqtt_sub_relay;
+	String mqtt_sub_reset;
+
 	if (! mqtt_active_p)
 		return;
 
 	if (mqtt_client.connect (cfg.dev_mqtt_name)) {
-		mqtt_client.subscribe (OBI_MQTT_SUBSCRIBE_RELAY);
-		mqtt_client.subscribe (OBI_MQTT_SUBSCRIBE_RESET);
+		mqtt_sub_relay = cfg.dev_mqtt_name;
+		mqtt_sub_relay += "/";
+		mqtt_sub_relay += OBI_MQTT_SUBSCRIBE_RELAY;
+
+		mqtt_sub_reset = cfg.dev_mqtt_name;
+		mqtt_sub_reset += "/";
+		mqtt_sub_reset += OBI_MQTT_SUBSCRIBE_RESET;
+
+		mqtt_client.subscribe (mqtt_sub_relay.c_str ());
+		mqtt_client.subscribe (mqtt_sub_reset.c_str ());
+		mqtt_client.setCallback (&mqtt_callback);
 	}
+
+	return;
 }
 
 void
@@ -55,11 +83,13 @@ mqtt_begin (void)
 	    && atoi (cfg.mqtt_server_port) < 65536) {
 
 		mqtt_client.setServer (cfg.mqtt_server_host, atoi (cfg.mqtt_server_port));
-		mqtt_client.setCallback (&mqtt_callback);
 		mqtt_active_p = true;
+
 
 		mqtt_reconnect ();
 	}
+
+	return;
 }
 
 void
