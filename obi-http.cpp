@@ -373,8 +373,8 @@ http_POST_config (void)
 			mqtt_trigger_reset ();
 	}
 
-	http_server.sendHeader ("Location", "/status");
-	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/status\">status</a>.</body></html>");
+	http_server.sendHeader ("Location", "/");
+	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/\">/</a>.</body></html>");
 
 	if (need_config_save_p)
 		config_save (&cfg);
@@ -387,7 +387,7 @@ http_POST_config (void)
 }
 
 void
-http_GET_status (void)
+http_GET_slash (void)
 {
 	String html;
 	uint8_t mac[6];
@@ -450,8 +450,37 @@ http_GET_status (void)
 void
 http_X_not_found (void)
 {
-	http_server.sendHeader ("Location", "/status");
-	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/status\">status</a>.</body></html>");
+	http_server.sendHeader ("Location", "/");
+	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/\">/</a>.</body></html>");
 
 	return;
+}
+
+void
+http_GET_on (void)
+{
+	relay_set (true);
+	http_server.send (200, "text/plain", "on\n");
+}
+
+void
+http_GET_off (void)
+{
+	relay_set (false);
+	http_server.send (200, "text/plain", "off\n");
+}
+
+void
+http_GET_status (void)
+{
+	http_server.send (200, "text/plain", (relay_get_state ()? "on\n": "off\n"));
+}
+
+void
+http_GET_toggle (void)
+{
+	bool on_p = ! relay_get_state ();
+
+	relay_set (on_p);
+	http_server.send (200, "text/plain", (on_p? "on\n": "off\n"));
 }
