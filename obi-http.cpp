@@ -408,7 +408,12 @@ http_GET_slash (void)
 	          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	/* Prepare HTML.  */
-	html += "<html><head><title>System Status</title></head><body><form action=\"/config\" method=\"post\"><table>";
+	html += "<html><head><title>";
+	if (strlen (cfg.dev_mqtt_name) > 0) {
+		html += cfg.dev_mqtt_name;
+		html += ": ";
+	}
+	html += "System Status</title></head><body><form action=\"/config\" method=\"post\"><table>";
 	html += gen_string_input  ("Wifi SSID",              HTTP_ARG_WIFI_SSID,           sizeof (cfg.wifi_ssid),        cfg.wifi_ssid);
 	html += gen_string_input  ("Wifi PSK",               HTTP_ARG_WIFI_PSK,            sizeof (cfg.wifi_psk),         cfg.wifi_psk);
 	html += gen_string_input  ("Device Description",     HTTP_ARG_DEV_DESCR,           sizeof (cfg.dev_descr),        cfg.dev_descr);
