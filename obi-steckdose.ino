@@ -76,7 +76,11 @@ setup (void)
 	/* Set to initial off.  */
 	relay_set (false);
 
+	http_server.on ("/",       HTTP_GET,  &http_GET_slash);
 	http_server.on ("/config", HTTP_POST, &http_POST_config);
+	http_server.on ("/on",     HTTP_GET,  &http_GET_on);
+	http_server.on ("/off",    HTTP_GET,  &http_GET_off);
+	http_server.on ("/toggle", HTTP_GET,  &http_GET_toggle);
 	http_server.on ("/status", HTTP_GET,  &http_GET_status);
 	http_server.onNotFound (&http_X_not_found);
 	http_server.begin ();

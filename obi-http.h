@@ -10,8 +10,14 @@ extern const char *tbl_serial_parity[3];
 extern const long tbl_serial_stopbits[2];
 
 extern void http_POST_config (void);
-extern void http_GET_status (void);
+extern void http_GET_slash (void);
 extern void http_X_not_found (void);
+
+/* Pimatic compatibility locations.  */
+extern void http_GET_on (void);
+extern void http_GET_off (void);
+extern void http_GET_status (void);
+extern void http_GET_toggle (void);
 
 #define HTTP_ARG_WIFI_SSID		"wifi_ssid"
 #define HTTP_ARG_WIFI_PSK		"wifi_psk"
