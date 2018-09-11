@@ -26,7 +26,7 @@ handle_button (void)
 
 	if (button_was_pressed_p
 	    && ! button_action_done_p
-	    && millis () > button_press_detected_millis + 500) {
+	    && button_press_detected_millis + 500 < millis ()) {
 
 		obi_printf ("Setting relay from %s to %s\r\n",
 		            (relay_get_state()? "on": "off"),
