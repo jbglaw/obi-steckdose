@@ -12,7 +12,7 @@ button_pressed_p (void)
 }
 
 void
-handle_button (void)
+button_handle (void)
 {
 	if (button_pressed_p ()) {
 		if (! button_was_pressed_p) {

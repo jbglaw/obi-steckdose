@@ -9,7 +9,9 @@
 #include "obi-misc.h"
 #include "obi-telnet.h"
 #include "obi-status-led.h"
+#include "obi-extra-pins.h"
 
+/* Hard-wired pins on PCB.  */
 const int pin_relay_on = 12;
 const int pin_relay_off = 5;
 const int pin_led_wifi = 4;
@@ -106,7 +108,7 @@ setup (void)
 
 		while (1) {
 			http_server.handleClient ();
-			handle_status_led ();
+			status_led_handle ();
 		}
 	}
 
@@ -121,7 +123,7 @@ setup (void)
 	state = st_connecting;
 	while (WiFi.status () != WL_CONNECTED) {
 		delay (10);
-		handle_status_led ();
+		status_led_handle ();
 	}
 	WiFi.setAutoReconnect (true);
 
@@ -146,6 +148,7 @@ setup (void)
 	http_server.begin ();
 	telnet_begin ();
 	mqtt_begin ();
+	extra_pins_begin ();
 
 	/* Publish initial relais state after MQTT server should be up.  */
 	relay_set (cfg.relay_on_after_boot_p);
@@ -159,6 +162,7 @@ loop (void)
 	http_server.handleClient ();
 	telnet_handle ();
 	mqtt_handle ();
-	handle_status_led ();
-	handle_button ();
+	extra_pins_handle ();
+	status_led_handle ();
+	button_handle ();
 }

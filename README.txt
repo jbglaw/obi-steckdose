@@ -12,8 +12,9 @@ make upload	# Serial port in Makefile
  LED Blinking
 ~~~~~~~~~~~~~~
 Config Mode (as AP): 500/500
+OTA Flashing: solid on
 Connecting in STA mode: 100/100
-Running (in STA mode): 100/900 / 900/100 (depends on Relay on/off)
+Running (in STA mode): 150/850 / 990/10 (depends on Relay on/off)
 
  Missing stuff
 ~~~~~~~~~~~~~~~

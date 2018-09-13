@@ -8,6 +8,7 @@
 extern void relay_set (bool on_p);
 extern bool relay_get_state (void);
 
+/* Hard wired on PCB.  */
 extern const int pin_relay_on;
 extern const int pin_relay_off;
 extern const int pin_led_wifi;
@@ -16,7 +17,8 @@ extern const int pin_btn;
 enum state {
 	st_config,
 	st_connecting,
-	st_running
+	st_running,
+	st_flashing,
 };
 extern enum state state;
 

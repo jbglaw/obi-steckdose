@@ -5,6 +5,7 @@
 #include "obi-http.h"
 #include "obi-misc.h"
 #include "obi-mqtt.h"
+#include "obi-status-led.h"
 
 const long tbl_serial_baud_rate[] = {
 	75,
@@ -337,6 +338,11 @@ http_POST_config (void)
 
 	/* OTA Update URL.  */
 	if (http_server.hasArg (HTTP_ARG_OTA_UPDATE_URL) && http_server.arg(HTTP_ARG_OTA_UPDATE_URL).length () > 0) {
+		enum state former_state = state;
+
+		state = st_flashing;
+		status_led_handle ();
+
 		syslog.logf (LOG_CRIT, "Trying to update firmware from %s, current GIT=%s built at %s",     http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), obi_git_commit, obi_build_timestamp);
 		obi_printf (           "Trying to update firmware from %s, current GIT=%s built at %s\r\n", http_server.arg(HTTP_ARG_OTA_UPDATE_URL).c_str (), obi_git_commit, obi_build_timestamp);
 		ESPhttpUpdate.rebootOnUpdate (false);
@@ -353,6 +359,9 @@ http_POST_config (void)
 			syslog.logf (LOG_CRIT, "Update failed, will not reboot.");
 			obi_printf (           "Update failed, will not reboot.\r\n");
 		}
+
+		state = former_state;
+		status_led_handle ();
 	}
 
 	/* New relay state.  */

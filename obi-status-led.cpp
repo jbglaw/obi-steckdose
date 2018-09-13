@@ -4,10 +4,12 @@
 static bool wifi_led_enabled_p = false;
 static unsigned long last_action = 0;
 
-void
-handle_status_led (void)
-{
+static unsigned long last_test_millis = 0;
+static unsigned long test_counter = 0;
 
+void
+status_led_handle (void)
+{
 	switch (state) {
 		case st_config:
 			if (last_action + 500 < millis ()) {
@@ -25,16 +27,21 @@ handle_status_led (void)
 			}
 			break;
 
+		case st_flashing:
+			last_action = millis ();
+			digitalWrite (pin_led_wifi, true);
+			break;
+
 		case st_running:
 			if (relay_get_state ()) {
 				if (wifi_led_enabled_p) {
-					if (last_action + 900 < millis ()) {
+					if (last_action + 150 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
 						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
 						last_action = millis ();
 					}
 				} else {
-					if (last_action + 100 < millis ()) {
+					if (last_action + 850 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
 						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
 						last_action = millis ();
@@ -42,13 +49,13 @@ handle_status_led (void)
 				}
 			} else {
 				if (wifi_led_enabled_p) {
-					if (last_action + 100 < millis ()) {
+					if (last_action + 10 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
 						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
 						last_action = millis ();
 					}
 				} else {
-					if (last_action + 900 < millis ()) {
+					if (last_action + 990 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
 						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
 						last_action = millis ();
