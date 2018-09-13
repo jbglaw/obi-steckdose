@@ -166,7 +166,7 @@ telnet_break_start (void)
 {
 	if (! break_active_p) {
 		pinMode (UART0_DEFAULT_TxD_PIN, UART0_GPIO_FUNCTION);
-		digitalWrite (UART0_DEFAULT_TxD_PIN, 0);
+		digitalWrite (UART0_DEFAULT_TxD_PIN, LOW);
 		break_active_p = true;
 	}
 
@@ -177,7 +177,7 @@ static void
 telnet_break_stop (void)
 {
 	if (break_active_p) {
-		digitalWrite (UART0_DEFAULT_TxD_PIN, 1);
+		digitalWrite (UART0_DEFAULT_TxD_PIN, HIGH);
 		pinMode (UART0_DEFAULT_TxD_PIN, UART0_UART_FUNCTION);
 		break_active_p = false;
 	}

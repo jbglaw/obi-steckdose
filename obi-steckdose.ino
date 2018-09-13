@@ -12,14 +12,14 @@
 #include "obi-extra-pins.h"
 
 /* Hard-wired pins on PCB.  */
-const int pin_relay_on = 12;
-const int pin_relay_off = 5;
-const int pin_led_wifi = 4;
-const int pin_btn = 14;
+const int pin_led_wifi	=  4;
+const int pin_relay_off	=  5;
+const int pin_relay_on	= 12;
+const int pin_btn	= 14;
 ADC_MODE (ADC_VCC);
 
-static bool relay_on_p = false;
-enum state state = st_running;
+static bool relay_on_p	= false;
+enum state state	= st_running;
 
 static WiFiUDP udpClient;
 Syslog syslog (udpClient);
@@ -41,13 +41,13 @@ relay_set (bool on_p)
 	relay_on_p = on_p;
 
 	/* Put both pins HIGH.  */
-	digitalWrite (pin_relay_on,  1);
-	digitalWrite (pin_relay_off, 1);
+	digitalWrite (pin_relay_on,  HIGH);
+	digitalWrite (pin_relay_off, HIGH);
 
 	/* Toggle the ON or OFF pin.  */
-	digitalWrite (toggle_pin, 0);
+	digitalWrite (toggle_pin, LOW);
 	delay (50);
-	digitalWrite (toggle_pin, 1);
+	digitalWrite (toggle_pin, HIGH);
 
 	snprintf (relay_state, sizeof (relay_state), "%i", (relay_on_p? "on": "off"));
 	mqtt_publish (OBI_MQTT_SUBSCRIBE_RELAY, relay_state);

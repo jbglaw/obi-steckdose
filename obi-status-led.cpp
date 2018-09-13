@@ -14,7 +14,7 @@ status_led_handle (void)
 		case st_config:
 			if (last_action + 500 < millis ()) {
 				wifi_led_enabled_p = ! wifi_led_enabled_p;
-				digitalWrite (pin_led_wifi, wifi_led_enabled_p);
+				digitalWrite (pin_led_wifi, wifi_led_enabled_p? HIGH: LOW);
 				last_action = millis ();
 			}
 			break;
@@ -22,14 +22,14 @@ status_led_handle (void)
 		case st_connecting:
 			if (last_action + 100 < millis ()) {
 				wifi_led_enabled_p = ! wifi_led_enabled_p;
-				digitalWrite (pin_led_wifi, wifi_led_enabled_p);
+				digitalWrite (pin_led_wifi, wifi_led_enabled_p? HIGH: LOW);
 				last_action = millis ();
 			}
 			break;
 
 		case st_flashing:
 			last_action = millis ();
-			digitalWrite (pin_led_wifi, true);
+			digitalWrite (pin_led_wifi, HIGH);
 			break;
 
 		case st_running:
@@ -37,13 +37,13 @@ status_led_handle (void)
 				if (wifi_led_enabled_p) {
 					if (last_action + 150 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
-						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
+						digitalWrite (pin_led_wifi, wifi_led_enabled_p? HIGH: LOW);
 						last_action = millis ();
 					}
 				} else {
 					if (last_action + 850 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
-						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
+						digitalWrite (pin_led_wifi, wifi_led_enabled_p? HIGH: LOW);
 						last_action = millis ();
 					}
 				}
@@ -51,13 +51,13 @@ status_led_handle (void)
 				if (wifi_led_enabled_p) {
 					if (last_action + 10 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
-						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
+						digitalWrite (pin_led_wifi, wifi_led_enabled_p? HIGH: LOW);
 						last_action = millis ();
 					}
 				} else {
 					if (last_action + 990 < millis ()) {
 						wifi_led_enabled_p = ! wifi_led_enabled_p;
-						digitalWrite (pin_led_wifi, wifi_led_enabled_p);
+						digitalWrite (pin_led_wifi, wifi_led_enabled_p? HIGH: LOW);
 						last_action = millis ();
 					}
 				}
