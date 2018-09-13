@@ -453,6 +453,9 @@ http_GET_slash (void)
 	html += "<tr><th>Build timestamp:</th><td>";
 	html += obi_build_timestamp;
 	html += "</td></tr>";
+	html += "<tr><th>Current &mu;C Vcc:</th><td>";
+	html += (float) ESP.getVcc () / 1024.0;
+	html += "&nbsp;V</td></tr>";
 
 	html += "</table>";
 	html += "<input type=\"submit\" value=\"Save\">";

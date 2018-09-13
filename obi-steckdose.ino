@@ -16,6 +16,7 @@ const int pin_relay_on = 12;
 const int pin_relay_off = 5;
 const int pin_led_wifi = 4;
 const int pin_btn = 14;
+ADC_MODE (ADC_VCC);
 
 static bool relay_on_p = false;
 enum state state = st_running;
