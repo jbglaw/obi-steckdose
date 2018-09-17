@@ -9,6 +9,9 @@ git submodule update
 make
 make upload	# Serial port in Makefile
 
+You can also use OTA updates after the firmware has been installed
+for the first time.
+
  LED Blinking
 ~~~~~~~~~~~~~~
 Config Mode (as AP): 500/500
