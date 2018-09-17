@@ -40,6 +40,7 @@ extern void http_GET_toggle (void);
 #define HTTP_ARG_NEW_RELAY_STATE	"relay"
 #define HTTP_ARG_TRIGGER_RESET		"reset"
 #define HTTP_ARG_OTA_UPDATE_URL		"ota_url"
+#define HTTP_ARG_REBOOT_OBI		"reboot_esp8266"
 
 
 #endif /* OBI_HTTP_H  */

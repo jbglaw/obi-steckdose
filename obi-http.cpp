@@ -413,6 +413,15 @@ http_POST_config (void)
 			mqtt_trigger_reset ();
 	}
 
+	/* Reboot OBI-Steckdose.  */
+	{
+		bool reboot_now_p = false;
+
+		ret_p = parse_bool (HTTP_ARG_REBOOT_OBI, &reboot_now_p);
+		if (ret_p && reboot_now_p)
+			ESP.restart ();
+	}
+
 	http_server.sendHeader ("Location", "/");
 	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/\">/</a>.</body></html>");
 
@@ -468,6 +477,7 @@ http_GET_slash (void)
 
 	html += gen_bool_choice   ("Current Relay State",    HTTP_ARG_NEW_RELAY_STATE,     "On",     "Off",               relay_get_state ());
 	html += gen_bool_choice   ("Trigger RESET",          HTTP_ARG_TRIGGER_RESET,       "Reset!", "Keep running",      false);
+	html += gen_bool_choice   ("Reboot ESP8266",         HTTP_ARG_REBOOT_OBI,          "Reboot!","Keep running",      false);
 	html += gen_string_input  ("Load OTA Update from URL",HTTP_ARG_OTA_UPDATE_URL,     256,                           "");
 	html += "<tr><th>Wifi MAC:</th><td>" + String (mac_formatted) + "</td></tr>";
 	html += "<tr><th>Wifi IP:</th><td>" + my_ip.toString () + "</td></tr>";
