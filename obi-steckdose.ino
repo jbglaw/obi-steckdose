@@ -88,7 +88,7 @@ setup (void)
 	http_server.begin ();
 
 	/* Enable config-only mode?  */
-	if (config_load (&cfg) != 0
+	if (config_load () != 0
 	    || button_pressed_p ()
 	    || strlen (cfg.wifi_ssid) == 0
 	    || strlen (cfg.wifi_psk) == 0) {
@@ -118,8 +118,8 @@ setup (void)
 
 	Serial.printf ("Starting STA wifi with %s / %s", cfg.wifi_ssid, cfg.wifi_psk);
 	WiFi.mode (WIFI_STA);
-	if (strlen (cfg.dev_mqtt_name) > 0)
-		WiFi.hostname (cfg.dev_mqtt_name);
+	if (strlen (cfg.mqtt_name) > 0)
+		WiFi.hostname (cfg.mqtt_name);
 	WiFi.begin (cfg.wifi_ssid, cfg.wifi_psk);
 	state = st_connecting;
 	while (WiFi.status () != WL_CONNECTED) {
@@ -130,22 +130,21 @@ setup (void)
 
 	/* Init syslog.  */
 	if (strlen (cfg.syslog_host) > 0
-	    && strlen (cfg.syslog_port) > 0
-	    && atoi (cfg.syslog_port) > 0
-	    && atoi (cfg.syslog_port) < 6536) {
+	    && cfg.syslog_port > 0
+	    && cfg.syslog_port < 65536) {
 
-		syslog.server (cfg.syslog_host, atoi (cfg.syslog_port));
-		if (strlen (cfg.dev_mqtt_name) > 0)
-			syslog.deviceHostname (cfg.dev_mqtt_name);
+		syslog.server (cfg.syslog_host, cfg.syslog_port);
+		if (strlen (cfg.mqtt_name) > 0)
+			syslog.deviceHostname (cfg.mqtt_name);
 		syslog.appName ("firmware");
 		have_syslog_p = true;
 		syslog.logf (LOG_CRIT, "OBI-Steckdose `%s' starting up in STA mode using GIT=%s built at %s",
-		             cfg.dev_mqtt_name, obi_git_commit, obi_build_timestamp);
+		             cfg.mqtt_name, obi_git_commit, obi_build_timestamp);
 	}
 
 	/* Bring up all the stuff.  */
 	Serial.begin (cfg.serial_speed, serial_framing ());
-	MDNS.begin (cfg.dev_mqtt_name);
+	MDNS.begin (cfg.mqtt_name);
 	http_server.begin ();
 	telnet_begin ();
 	mqtt_begin ();

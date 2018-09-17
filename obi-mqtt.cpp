@@ -56,12 +56,12 @@ mqtt_reconnect (void)
 	if (! mqtt_active_p)
 		return;
 
-	if (mqtt_client.connect (cfg.dev_mqtt_name)) {
-		mqtt_sub_relay = cfg.dev_mqtt_name;
+	if (mqtt_client.connect (cfg.mqtt_name)) {
+		mqtt_sub_relay = cfg.mqtt_name;
 		mqtt_sub_relay += "/";
 		mqtt_sub_relay += OBI_MQTT_SUBSCRIBE_RELAY;
 
-		mqtt_sub_reset = cfg.dev_mqtt_name;
+		mqtt_sub_reset = cfg.mqtt_name;
 		mqtt_sub_reset += "/";
 		mqtt_sub_reset += OBI_MQTT_SUBSCRIBE_RESET;
 
@@ -76,13 +76,10 @@ mqtt_reconnect (void)
 void
 mqtt_begin (void)
 {
-	if (strlen (cfg.mqtt_server_host) > 0
-	    && strlen (cfg.dev_mqtt_name) > 0
-	    && strlen (cfg.mqtt_server_port) > 0
-	    && atoi (cfg.mqtt_server_port) > 0
-	    && atoi (cfg.mqtt_server_port) < 65536) {
+	if (strlen (cfg.mqtt_host) > 0
+	    && cfg.mqtt_port != 0) {
 
-		mqtt_client.setServer (cfg.mqtt_server_host, atoi (cfg.mqtt_server_port));
+		mqtt_client.setServer (cfg.mqtt_host, cfg.mqtt_port);
 		mqtt_active_p = true;
 
 
@@ -96,7 +93,7 @@ void
 mqtt_publish (const char *_topic, const char *value)
 {
 	if (mqtt_active_p) {
-		String topic (cfg.dev_mqtt_name);
+		String topic (cfg.mqtt_name);
 
 		topic += "/";
 		topic += _topic;

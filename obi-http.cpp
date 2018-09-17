@@ -7,7 +7,7 @@
 #include "obi-mqtt.h"
 #include "obi-status-led.h"
 
-const long tbl_serial_baud_rate[] = {
+const uint32_t tbl_serial_baud_rate[] = {
 	75,
 	110,
 	150,
@@ -24,7 +24,7 @@ const long tbl_serial_baud_rate[] = {
 	460800,
 	921600,
 };
-const long tbl_serial_bits[] = {
+const uint32_t tbl_serial_bits[] = {
 	8,
 	7,
 	6,
@@ -35,7 +35,7 @@ const char *tbl_serial_parity[] = {
 	"E",
 	"O",
 };
-const long tbl_serial_stopbits[] = {
+const uint32_t tbl_serial_stopbits[] = {
 	1,
 	2,
 };
@@ -69,7 +69,7 @@ gen_bool_choice (const char *title, const char *cfg_option, const char *yes, con
 }
 
 static String
-gen_long_choice (const char *title, const char *cfg_option, const long *data, size_t num, long dflt, long curr)
+gen_long_choice (const char *title, const char *cfg_option, const uint32_t *data, size_t num, uint32_t dflt, uint32_t curr)
 {
 	bool value_found_p = false;
 	String ret;
@@ -140,7 +140,21 @@ gen_string_input (const char *title, const char *cfg_option, size_t buflen, cons
 	ret += title;
 	ret += ":</th><td><input type=\"text\" name=\"";
 	ret += cfg_option;
-	ret += "\" maxlength=\"" + String (buflen - 1)+ "\" value=\"" + String (curr)+ "\"></td></tr>";
+	ret += "\" maxlength=\"" + String (buflen - 1) + "\" value=\"" + String (curr)+ "\"></td></tr>";
+
+	return ret;
+}
+
+static String
+gen_uint32t_input (const char *title, const char *cfg_option, const uint32_t curr)
+{
+	String ret;
+
+	ret += "<tr><th>";
+	ret += title;
+	ret += ":</th><td><input type=\"text\" name=\"";
+	ret += cfg_option;
+	ret += "\" maxlength=\"16\" value=\"" + String (curr)+ "\"></td></tr>";
 
 	return ret;
 }
@@ -166,13 +180,13 @@ parse_bool (const char *cfg_option, bool *dst)
 }
 
 static bool
-parse_long_choice (const char *cfg_option, const long *data, size_t num, long *dst)
+parse_long_choice (const char *cfg_option, const uint32_t *data, size_t num, uint32_t *dst)
 {
 	bool ret_p = false;
-	long new_value;
+	uint32_t new_value;
 
 	if (http_server.hasArg (cfg_option)) {
-		new_value = atol (http_server.arg (cfg_option).c_str ());
+		new_value = strtoul (http_server.arg (cfg_option).c_str (), NULL, 0);
 
 		for (size_t i = 0; i < num; i++) {
 			if (data[i] == new_value
@@ -226,6 +240,23 @@ parse_string_input (const char *cfg_option, char *dst, size_t dst_len)
 	return ret_p;
 }
 
+static bool
+parse_uint32t_input (const char *cfg_option, uint32_t *dst)
+{
+	bool ret_p = false;
+	uint32_t new_val;
+
+	if (http_server.hasArg (cfg_option)) {
+		new_val = strtoul (http_server.arg (cfg_option).c_str (), NULL, 0);
+		if (new_val != *dst) {
+			*dst = new_val;
+			ret_p = true;
+		}
+	}
+
+	return ret_p;
+}
+
 
 void
 http_POST_config (void)
@@ -252,7 +283,7 @@ http_POST_config (void)
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input (HTTP_ARG_MQTT_NAME, cfg.dev_mqtt_name, sizeof (cfg.dev_mqtt_name));
+	ret_p = parse_string_input (HTTP_ARG_MQTT_NAME, cfg.mqtt_name, sizeof (cfg.mqtt_name));
 	obi_printf ("%s: %s\r\n", HTTP_ARG_MQTT_NAME, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
@@ -290,27 +321,27 @@ http_POST_config (void)
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input (HTTP_ARG_SYSLOG_PORT, cfg.syslog_port, sizeof (cfg.syslog_port));
+	ret_p = parse_uint32t_input (HTTP_ARG_SYSLOG_PORT, &cfg.syslog_port);
 	obi_printf ("%s: %s\r\n", HTTP_ARG_SYSLOG_PORT, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_HOST, cfg.mqtt_server_host, sizeof (cfg.mqtt_server_host));
+	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_HOST, cfg.mqtt_host, sizeof (cfg.mqtt_host));
 	obi_printf ("%s: %s\r\n", HTTP_ARG_MQTT_SERVER_HOST, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input (HTTP_ARG_MQTT_SERVER_PORT, cfg.mqtt_server_port, sizeof (cfg.mqtt_server_port));
+	ret_p = parse_uint32t_input (HTTP_ARG_MQTT_SERVER_PORT, &cfg.mqtt_port);
 	obi_printf ("%s: %s\r\n", HTTP_ARG_MQTT_SERVER_PORT, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_string_input (HTTP_ARG_TELNET_PORT, cfg.telnet_port, sizeof (cfg.telnet_port));
+	ret_p = parse_uint32t_input (HTTP_ARG_TELNET_PORT, &cfg.telnet_port);
 	obi_printf ("%s: %s\r\n", HTTP_ARG_TELNET_PORT, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 	need_reboot_p |= ret_p;
 
-	ret_p = parse_bool (HTTP_ARG_ENABLE_TELNET_PROTO, &cfg.enable_telnet_negotiation_p);
+	ret_p = parse_bool (HTTP_ARG_ENABLE_TELNET_PROTO, &cfg.telnet_enable_proto_p);
 	obi_printf ("%s: %s\r\n", HTTP_ARG_ENABLE_TELNET_PROTO, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
@@ -326,7 +357,7 @@ http_POST_config (void)
 	 * Act upon config changes.
 	 */
 	if (need_config_save_p)
-		config_save (&cfg);
+		config_save ();
 	if (need_reboot_p)
 		ESP.restart ();
 	if (need_serial_change_p)
@@ -385,12 +416,6 @@ http_POST_config (void)
 	http_server.sendHeader ("Location", "/");
 	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/\">/</a>.</body></html>");
 
-	if (need_config_save_p)
-		config_save (&cfg);
-	if (need_reboot_p)
-		ESP.restart ();
-	if (need_serial_change_p)
-		Serial.begin (cfg.serial_speed, serial_framing ());
 
 	return;
 }
@@ -418,27 +443,27 @@ http_GET_slash (void)
 
 	/* Prepare HTML.  */
 	html += "<html><head><title>";
-	if (strlen (cfg.dev_mqtt_name) > 0) {
-		html += cfg.dev_mqtt_name;
+	if (strlen (cfg.mqtt_name) > 0) {
+		html += cfg.mqtt_name;
 		html += ": ";
 	}
 	html += "System Status</title></head><body><form action=\"/config\" method=\"post\"><table>";
 	html += gen_string_input  ("Wifi SSID",              HTTP_ARG_WIFI_SSID,           sizeof (cfg.wifi_ssid),        cfg.wifi_ssid);
 	html += gen_string_input  ("Wifi PSK",               HTTP_ARG_WIFI_PSK,            sizeof (cfg.wifi_psk),         cfg.wifi_psk);
 	html += gen_string_input  ("Device Description",     HTTP_ARG_DEV_DESCR,           sizeof (cfg.dev_descr),        cfg.dev_descr);
-	html += gen_string_input  ("MQTT/mDNS Name",         HTTP_ARG_MQTT_NAME,           sizeof (cfg.dev_mqtt_name),    cfg.dev_mqtt_name);
-	html += gen_string_input  ("MQTT Broker IP",         HTTP_ARG_MQTT_SERVER_HOST,    sizeof (cfg.mqtt_server_host), cfg.mqtt_server_host);
-	html += gen_string_input  ("MQTT Broker Port",       HTTP_ARG_MQTT_SERVER_PORT,    sizeof (cfg.mqtt_server_port), cfg.mqtt_server_port);
+	html += gen_string_input  ("MQTT/mDNS Name",         HTTP_ARG_MQTT_NAME,           sizeof (cfg.mqtt_name),        cfg.mqtt_name);
+	html += gen_string_input  ("MQTT Broker IP",         HTTP_ARG_MQTT_SERVER_HOST,    sizeof (cfg.mqtt_host),        cfg.mqtt_host);
+	html += gen_uint32t_input ("MQTT Broker Port",       HTTP_ARG_MQTT_SERVER_PORT,                                   cfg.mqtt_port);
 	html += gen_string_input  ("Syslog Server IP/Name",  HTTP_ARG_SYSLOG_HOST,         sizeof (cfg.syslog_host),      cfg.syslog_host);
-	html += gen_string_input  ("Syslog Server Port",     HTTP_ARG_SYSLOG_PORT,         sizeof (cfg.syslog_port),      cfg.syslog_port);
+	html += gen_uint32t_input ("Syslog Server Port",     HTTP_ARG_SYSLOG_PORT,                                        cfg.syslog_port);
 	html += gen_bool_choice   ("Syslog IP->Serial",      HTTP_ARG_SYSLOG_IP_TO_SERIAL, "Yes",  "No",                  cfg.syslog_sent_to_serial_p);
 	html += gen_bool_choice   ("Syslog Serial->IP",      HTTP_ARG_SYSLOG_SERIAL_TO_IP, "Yes",  "No",                  cfg.syslog_recv_from_serial_p);
 	html += gen_long_choice   ("Serial Speed",           HTTP_ARG_SERIAL_SPEED,        tbl_serial_baud_rate,          ARRAY_SIZE (tbl_serial_baud_rate), 9600, cfg.serial_speed);
 	html += gen_long_choice   ("Serial Bits",            HTTP_ARG_SERIAL_BITS,         tbl_serial_bits,               ARRAY_SIZE (tbl_serial_bits),      8,    cfg.serial_bits);
 	html += gen_string_choice ("Serial Parity",          HTTP_ARG_SERIAL_PARITY,       tbl_serial_parity,             ARRAY_SIZE (tbl_serial_parity),    "N",  cfg.serial_parity);
 	html += gen_long_choice   ("Serial Stopbits",        HTTP_ARG_SERIAL_STOPBITS,     tbl_serial_stopbits,           ARRAY_SIZE (tbl_serial_stopbits),  1,    cfg.serial_stopbits);
-	html += gen_string_input  ("Raw/Telnet Port",        HTTP_ARG_TELNET_PORT,         sizeof (cfg.telnet_port),      cfg.telnet_port);
-	html += gen_bool_choice   ("Enable TELNET Protocol", HTTP_ARG_ENABLE_TELNET_PROTO, "Yes",    "No",                cfg.enable_telnet_negotiation_p);
+	html += gen_uint32t_input ("Raw/Telnet Port",        HTTP_ARG_TELNET_PORT,                                        cfg.telnet_port);
+	html += gen_bool_choice   ("Enable TELNET Protocol", HTTP_ARG_ENABLE_TELNET_PROTO, "Yes",    "No",                cfg.telnet_enable_proto_p);
 	html += gen_bool_choice   ("Boot-Up Relay state",    HTTP_ARG_RELAY_BOOT_STATE,    "On",     "Off",               cfg.relay_on_after_boot_p);
 
 	html += gen_bool_choice   ("Current Relay State",    HTTP_ARG_NEW_RELAY_STATE,     "On",     "Off",               relay_get_state ());

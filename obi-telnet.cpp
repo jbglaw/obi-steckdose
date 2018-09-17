@@ -156,7 +156,7 @@ syslog_send_tx_data (bool force_p)
 void
 telnet_begin (void)
 {
-	telnet_server.begin (atoi (cfg.telnet_port));
+	telnet_server.begin (cfg.telnet_port);
 
 	return;
 }
@@ -285,7 +285,7 @@ telnet_handle (void)
 		for (size_t i = 0; i < ARRAY_SIZE (telnet_client); i++) {
 			if (! telnet_client[i].active_p) {
 				telnet_client[i].client = new_client;
-				telnet_progress (i, (cfg.enable_telnet_negotiation_p? TN_init: TN_transparent));
+				telnet_progress (i, (cfg.telnet_enable_proto_p? TN_init: TN_transparent));
 				telnet_client[i].active_p = true;
 				found_slot_p = true;
 				break;
@@ -458,7 +458,7 @@ telnet_handle (void)
 								    && ser_buf[bufidx] <= 8) {
 									cfg.serial_bits = ser_buf[bufidx];
 									Serial.begin (cfg.serial_speed, serial_framing ());
-									config_save (&cfg);
+									config_save ();
 								} else if (ser_buf[bufidx] == 0) {
 									char respBuf[7] = { T_IAC, T_SB, T_OPT_COMPORT, T_SUB_COMPORT_SETDATASIZE, (char) cfg.serial_bits, T_IAC, T_SE };
 									telnet_client[i].client.write (respBuf, sizeof (respBuf));
@@ -473,7 +473,7 @@ telnet_handle (void)
 									if (long_in_table (tn_baud, tbl_serial_baud_rate, ARRAY_SIZE (tbl_serial_baud_rate))) {
 										cfg.serial_speed = tn_baud;
 										Serial.begin (cfg.serial_speed, serial_framing ());
-										config_save (&cfg);
+										config_save ();
 									} else if (tn_baud == 0) {
 										char respBuf[10] = { T_IAC, T_SB, T_OPT_COMPORT, T_SUB_COMPORT_SETBAUD,
 										                     (unsigned char) ((cfg.serial_speed >> 24) & 0xff),
@@ -504,7 +504,7 @@ telnet_handle (void)
 									else if (ser_buf[bufidx] == 3)
 										cfg.serial_parity[0] = 'E';
 									Serial.begin (cfg.serial_speed, serial_framing ());
-									config_save (&cfg);
+									config_save ();
 								}
 								telnet_progress (i, TN_end);
 								break;
@@ -521,7 +521,7 @@ telnet_handle (void)
 									if (long_in_table (ser_buf[bufidx], tbl_serial_stopbits, ARRAY_SIZE (tbl_serial_stopbits))) {
 										cfg.serial_stopbits = ser_buf[bufidx];
 										Serial.begin (cfg.serial_speed, serial_framing ());
-										config_save (&cfg);
+										config_save ();
 									}
 								}
 								telnet_progress (i, TN_end);

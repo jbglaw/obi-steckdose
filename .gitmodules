@@ -7,3 +7,9 @@
 [submodule "libraries/PubSubClient"]
 	path = libraries/PubSubClient
 	url = https://github.com/knolleary/pubsubclient.git
+[submodule "libraries/ArduinoJson"]
+	path = libraries/ArduinoJson
+	url = https://github.com/bblanchon/ArduinoJson.git
+[submodule "libraries/CRC32"]
+	path = libraries/CRC32
+	url = https://github.com/bakercp/CRC32.git
