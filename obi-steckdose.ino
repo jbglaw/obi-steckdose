@@ -68,6 +68,8 @@ relay_get_state (void)
 void
 setup (void)
 {
+	bool after_initial_poweron_p = false;
+
 	Serial.begin (115200, SERIAL_8N1);
 
 	pinMode (pin_btn, INPUT);
@@ -97,8 +99,8 @@ setup (void)
 		char default_ssid_name[64];
 
 		WiFi.softAPmacAddress (mac);
-		snprintf (default_ssid_name, sizeof (default_ssid_name), "OBI-%02x%02x%02x",
-		          mac[3], mac[4], mac[5]);
+		snprintf (default_ssid_name, sizeof (default_ssid_name), "OBI-%02x%02x%02x%02x%02x%02x",
+		          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 		state = st_config;
 
@@ -110,6 +112,18 @@ setup (void)
 		while (1) {
 			http_server.handleClient ();
 			status_led_handle ();
+
+			/* If in config mode, reboot on button press after
+			   5 sec IFF Wifi config is there.  */
+			if (millis () > 5000)
+				after_initial_poweron_p = true;
+			if (after_initial_poweron_p
+			    && button_pressed_p ()
+			    && strlen (cfg.wifi_ssid) > 0
+			    && strlen (cfg.wifi_psk) > 0) {
+
+				ESP.restart ();
+			}
 		}
 	}
 
