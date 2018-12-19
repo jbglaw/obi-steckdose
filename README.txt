@@ -1,3 +1,9 @@
+ Hardware
+~~~~~~~~~~
+ESP8266 with 1 MB (?) Flash
+Tri-Wing: Gr. 1x89, Wera 875/4
+PCB: PH1x89, Wera 851/4
+
  Building
 ~~~~~~~~~~
 # Once:
