@@ -512,6 +512,7 @@ void
 http_GET_on (void)
 {
 	relay_set (true);
+	http_server.sendHeader ("Access-Control-Allow-Origin", "*");
 	http_server.send (200, "text/plain", "on\n");
 }
 
@@ -519,12 +520,14 @@ void
 http_GET_off (void)
 {
 	relay_set (false);
+	http_server.sendHeader ("Access-Control-Allow-Origin", "*");
 	http_server.send (200, "text/plain", "off\n");
 }
 
 void
 http_GET_status (void)
 {
+	http_server.sendHeader ("Access-Control-Allow-Origin", "*");
 	http_server.send (200, "text/plain", (relay_get_state ()? "on\n": "off\n"));
 }
 
@@ -534,5 +537,6 @@ http_GET_toggle (void)
 	bool on_p = ! relay_get_state ();
 
 	relay_set (on_p);
+	http_server.sendHeader ("Access-Control-Allow-Origin", "*");
 	http_server.send (200, "text/plain", (on_p? "on\n": "off\n"));
 }
