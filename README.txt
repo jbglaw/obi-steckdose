@@ -20,7 +20,7 @@ for the first time.
 
  LED Blinking
 ~~~~~~~~~~~~~~
-Config Mode (as AP): 500/500
+Config Mode (as AP): 500/500	(192.168.4.1)
 OTA Flashing: solid on
 Connecting in STA mode: 100/100
 Running (in STA mode): 150/850 / 10/990 (depends on Relay on/off)
