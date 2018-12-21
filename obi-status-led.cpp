@@ -1,3 +1,4 @@
+#include "obi-config.h"
 #include "obi-status-led.h"
 #include "obi-common.h"
 
@@ -10,6 +11,11 @@ static unsigned long test_counter = 0;
 void
 status_led_handle (void)
 {
+	if (cfg.suppress_led_blinking_p) {
+		digitalWrite (pin_led_wifi, LOW);
+		return;
+	}
+
 	switch (state) {
 		case st_config:
 			if (last_action + 500 < millis ()) {

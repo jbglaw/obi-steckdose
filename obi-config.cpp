@@ -47,6 +47,7 @@ config_load (void)
 	cfg.mqtt_port = OBI_MQTT_PORT_DEFAULT;
 	cfg.telnet_port = OBI_TELNET_PORT_DEFAULT;
 	cfg.telnet_enable_proto_p = true;
+	cfg.suppress_led_blinking_p = false;
 
 	/* Read flash header.  */
 	EEPROM.begin (sizeof (flash_header));
@@ -121,7 +122,9 @@ config_load (void)
 						cfg.telnet_port = root["telnet_port"];
 					if (root.containsKey ("telnet_enable_proto_p") && root["telnet_enable_proto_p"].is<bool> ())
 						cfg.telnet_enable_proto_p = root["telnet_enable_proto_p"];
-
+					/* Misc.  */
+					if (root.containsKey ("suppress_led_blinking_p") && root["suppress_led_blinking_p"].is<bool> ())
+						cfg.suppress_led_blinking_p = root["suppress_led_blinking_p"];
 					ret = 0;
 				} else {
 					obi_println ("JSON didn't parse.");
@@ -170,6 +173,7 @@ config_save (void)
 	root["mqtt_port"]                 = cfg.mqtt_port;
 	root["telnet_port"]               = cfg.telnet_port;
 	root["telnet_enable_proto_p"]     = cfg.telnet_enable_proto_p;
+	root["suppress_led_blinking_p"]   = cfg.suppress_led_blinking_p;
 	root.printTo (json);
 
 	/* Prepare flash header.  */

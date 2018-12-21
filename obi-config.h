@@ -26,6 +26,8 @@ struct obi_config {
 
 	uint32_t telnet_port;
 	bool	 telnet_enable_proto_p;
+
+	bool	 suppress_led_blinking_p;
 };
 extern struct obi_config cfg;
 

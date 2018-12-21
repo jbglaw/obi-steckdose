@@ -36,6 +36,7 @@ extern void http_GET_toggle (void);
 #define HTTP_ARG_MQTT_SERVER_PORT	"mqtt_port"
 #define HTTP_ARG_TELNET_PORT		"telnet_port"
 #define HTTP_ARG_ENABLE_TELNET_PROTO	"telnet_enable_proto_p"
+#define HTTP_ARG_SUPPRESS_LED_BLINK	"suppress_led_blinking_p"
 
 #define HTTP_ARG_NEW_RELAY_STATE	"relay"
 #define HTTP_ARG_TRIGGER_RESET		"reset"

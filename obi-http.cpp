@@ -353,6 +353,11 @@ http_POST_config (void)
 	obi_printf ("%s: %s\r\n", HTTP_ARG_SYSLOG_SERIAL_TO_IP, (ret_p? "yes": "no"));
 	need_config_save_p |= ret_p;
 
+	ret_p = parse_bool (HTTP_ARG_SUPPRESS_LED_BLINK, &cfg.suppress_led_blinking_p);
+	obi_printf ("%s: %s\r\n", HTTP_ARG_SUPPRESS_LED_BLINK, (ret_p? "yes": "no"));
+	need_config_save_p |= ret_p;
+
+
 	/*
 	 * Act upon config changes.
 	 */
@@ -425,7 +430,6 @@ http_POST_config (void)
 	http_server.sendHeader ("Location", "/");
 	http_server.send (302, "text/html", "<html><head><title>Redirect</title></head><body>Please go to <a href=\"/\">/</a>.</body></html>");
 
-
 	return;
 }
 
@@ -473,6 +477,7 @@ http_GET_slash (void)
 	html += gen_long_choice   ("Serial Stopbits",        HTTP_ARG_SERIAL_STOPBITS,     tbl_serial_stopbits,           ARRAY_SIZE (tbl_serial_stopbits),  1,    cfg.serial_stopbits);
 	html += gen_uint32t_input ("Raw/Telnet Port",        HTTP_ARG_TELNET_PORT,                                        cfg.telnet_port);
 	html += gen_bool_choice   ("Enable TELNET Protocol", HTTP_ARG_ENABLE_TELNET_PROTO, "Yes",    "No",                cfg.telnet_enable_proto_p);
+	html += gen_bool_choice   ("Suppress LED blinking",  HTTP_ARG_SUPPRESS_LED_BLINK,  "Yes",    "No",                cfg.suppress_led_blinking_p);
 	html += gen_bool_choice   ("Boot-Up Relay state",    HTTP_ARG_RELAY_BOOT_STATE,    "On",     "Off",               cfg.relay_on_after_boot_p);
 
 	html += gen_bool_choice   ("Current Relay State",    HTTP_ARG_NEW_RELAY_STATE,     "On",     "Off",               relay_get_state ());
