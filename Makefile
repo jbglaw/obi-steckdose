@@ -6,3 +6,6 @@ ESP8266_VERSION=2.4.2
 #USER_DEFINE=-DOBI_GIT_COMMIT=\""`git rev-parse HEAD`"\" -DOBI_BUILD_TIMESTAMP=\""`date`"\" -DDEBUG_ESP_HTTP_UPDATE=yes -DDEBUG_ESP_PORT=Serial
 USER_DEFINE=-DOBI_GIT_COMMIT=\""`git rev-parse HEAD`"\" -DOBI_BUILD_TIMESTAMP=\""`date`"\"
 include Esp8266-Arduino-Makefile/espXArduino.mk
+
+# scp build.*/obi-steckdose.bin root@octopus:/var/www/html/obi.bin
+# http://192.168.1.1/obi.bin
