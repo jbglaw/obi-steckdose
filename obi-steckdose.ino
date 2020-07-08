@@ -170,6 +170,30 @@ setup (void)
 	state = st_running;
 }
 
+static void
+check_wifi (void)
+{
+	static bool already_reconnecting_p = false;
+
+	if (WiFi.status () != WL_CONNECTED) {
+		obi_println ("Not connected!");
+		state = st_connecting;
+		if (! already_reconnecting_p) {
+			obi_println ("Initiating reconnect");
+			WiFi.begin (cfg.wifi_ssid, cfg.wifi_psk);
+			WiFi.setAutoReconnect (true);
+			already_reconnecting_p = true;
+		}
+	} else {
+		state = st_running;
+		if (already_reconnecting_p)
+			obi_println ("Reconnect successful");
+		already_reconnecting_p = false;
+	}
+
+	return;
+}
+
 void
 loop (void)
 {
@@ -179,4 +203,5 @@ loop (void)
 	extra_pins_handle ();
 	status_led_handle ();
 	button_handle ();
+	check_wifi ();
 }

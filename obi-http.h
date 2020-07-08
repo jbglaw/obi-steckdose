@@ -6,7 +6,7 @@
 extern ESP8266WebServer http_server;
 extern const uint32_t tbl_serial_baud_rate[15];
 extern const uint32_t tbl_serial_bits[4];
-extern const char *tbl_serial_parity[3];
+extern const char     *tbl_serial_parity[3];
 extern const uint32_t tbl_serial_stopbits[2];
 
 extern void http_POST_config (void);
@@ -42,6 +42,5 @@ extern void http_GET_toggle (void);
 #define HTTP_ARG_TRIGGER_RESET		"reset"
 #define HTTP_ARG_OTA_UPDATE_URL		"ota_url"
 #define HTTP_ARG_REBOOT_OBI		"reboot_esp8266"
-
 
 #endif /* OBI_HTTP_H  */
